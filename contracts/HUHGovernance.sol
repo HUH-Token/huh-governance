@@ -15,7 +15,7 @@ contract HUHGovernance is TokenTimeLockHandler{
     }
 
     function calculateMyVotingQuality() public view returns(uint) {
-        uint myConciousnessOnTheSubjectUnderVote = 1; // TODO
+        uint myConciousnessOnTheSubjectUnderVote = 1; // TODO This infor should come from an Oracle.
         TokenTimeLock[] memory myTokenTimeLocks = getMyTokenTimeLocks();
         uint accumulator = 0;
         for (uint i = 0; i < myTokenTimeLocks.length; i++){

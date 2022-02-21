@@ -11,6 +11,6 @@ contract Timestamp {
 
     function caculateYearsDeltatime(uint _years) public pure returns (uint256){
         uint oneDay = 1 days;
-        return (_years * 365 + _years/4) * oneDay;
+        return ((_years * 3652425 + 5000)/ 10000) * oneDay;
     }
 }
