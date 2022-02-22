@@ -26,18 +26,11 @@ describe('HUHGovernance contract', () => {
       depositValue = deploy.constants.INITIAL_BALANCE
       await deploy.acceptedToken.increaseAllowance(deploy.hUHGovernance.address, depositValue)
     })
-    it.skip('TokenTimeLock: release time is before current time', async () => {
+    it('TokenTimeLock: release time is before current time', async () => {
+      const forHowLong = 0
       await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPLOY - 1)
-      // FIXME
-      try {
-        await expect(deploy.hUHGovernance.deposit(depositValue))
-          .to.be.revertedWith('TokenTimeLock: release time is before current time')
-      } catch (error) {
-        // AssertionError: Expected transaction to be reverted with TokenTimeLock: release time is before current time,
-        // but other exception was thrown: Error: Transaction reverted and Hardhat couldn't infer the reason.
-        // Please report this to help us improve Hardhat.
-        console.log(error)
-      }
+      await expect(deploy.hUHGovernance.freezeHuhTokens(depositValue, forHowLong))
+        .to.be.revertedWith('TokenTimeLock: release time is before current time')
     })
     it('Emit FrozenHuhTokens', async () => {
       const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
