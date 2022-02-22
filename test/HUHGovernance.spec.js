@@ -58,6 +58,10 @@ describe('HUHGovernance contract', () => {
           expect(await tokenTimeLock.amount()).to.be.equal(deploy.constants.INITIAL_BALANCE)
         })
       })
+      it('Calculate my voting quality', async () => {
+        expect(await deploy.hUHGovernance.calculateMyVotingQuality())
+          .to.be.equal(1577890800000)
+      })
     })
   })
 })
