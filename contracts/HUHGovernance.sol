@@ -28,7 +28,7 @@ contract HUHGovernance is Context, Ownable{
         TokenTimeLock[] memory myTokenTimeLocks = getMyTokenTimeLocks();
         uint accumulator = 0;
         for (uint i = 0; i < myTokenTimeLocks.length; i++){
-            uint frozenStakeForThisLock = myTokenTimeLocks[i].deltaTime() * timeLockedToken.balanceOf(address(myTokenTimeLocks[i]));
+            uint frozenStakeForThisLock = myTokenTimeLocks[i].deltaTime() * myTokenTimeLocks[i].amount();
             uint voteQualityForThisLock = frozenStakeForThisLock * myConciousnessOnTheSubjectUnderVote;
             accumulator = accumulator + voteQualityForThisLock;
         }
