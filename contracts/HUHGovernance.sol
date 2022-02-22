@@ -66,10 +66,8 @@ contract HUHGovernance is Context, Ownable{
 
     function takeTokenTimeLock(address sender, uint tokenTimelockIndex) internal returns (TokenTimeLock) {
         TokenTimeLock element = tokenTimeLocks[sender][tokenTimelockIndex];
-        uint lengthM1 = tokenTimeLocks[sender].length - 1;
-        tokenTimeLocks[sender][tokenTimelockIndex] = tokenTimeLocks[sender][lengthM1];
-        delete tokenTimeLocks[sender][lengthM1];
-        tokenTimeLocks[sender].pop;
+        tokenTimeLocks[sender][tokenTimelockIndex] = tokenTimeLocks[sender][tokenTimeLocks[sender].length-1];
+        tokenTimeLocks[sender].pop();
         return element;
     }
 }
