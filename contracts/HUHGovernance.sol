@@ -4,20 +4,20 @@ pragma solidity ^0.8.9;
 import "./TokenTimeLock.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract HUHGovernance is Context, Ownable{
+contract HUHGovernance is Context, Initializable{
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
     using SafeERC20 for IERC20;
     
-    IERC20 immutable public timeLockedToken;
+    IERC20 public timeLockedToken;
     mapping(address => TokenTimeLock[]) public tokenTimeLocks;
     Timestamp private timestamp;
     uint private maximumLockTime;
 
-    constructor(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears)
-    {
+    function initialize(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public initializer{
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);

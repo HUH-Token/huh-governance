@@ -1,8 +1,9 @@
 import 'hardhat-deploy'
+import 'hardhat-deploy-ethers'
 
 import '@nomiclabs/hardhat-solhint'
-import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-waffle'
+// import '@nomiclabs/hardhat-ethers'
+// import '@nomiclabs/hardhat-waffle'
 import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 
@@ -38,6 +39,15 @@ module.exports = {
   },
   solidity: {
     compilers: [
+      {
+        version: '0.6.12',
+        settings: {
+          optimizer: {
+            enabled: enableGasReport || enableProduction,
+            runs: 200
+          }
+        }
+      },
       {
         version: '0.8.4',
         settings: {
