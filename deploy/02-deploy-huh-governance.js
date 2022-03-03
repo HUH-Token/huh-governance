@@ -8,14 +8,14 @@ const func = async (hre) => {
   // eslint-disable-next-line no-undef
   const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
   // eslint-disable-next-line no-undef
-  const uChildERC20ProxyContract = await deployments.get('UChildAdministrableERC20_Proxy')
+  const uChildAdministrableERC20Contract = await deployments.get('UChildAdministrableERC20')
   // eslint-disable-next-line no-undef
   const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
-  const safeERC20 = SafeERC20.attach(uChildERC20ProxyContract.address)
-
+  const safeERC20 = SafeERC20.attach(uChildAdministrableERC20Contract.address)
   await deploy('HUHGovernance', {
     from: deployer,
     proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
       execute: {
         methodName: 'initialize',
         args: [
@@ -30,4 +30,4 @@ const func = async (hre) => {
 }
 export default func
 func.tags = ['HUHGovernance']
-module.exports.dependencies = ['Timestamp', 'ERC20Mock'] // this ensures the ABDKMathQuad script above is executed shield, so `deployments.get('ABDKMathQuad')` succeeds
+module.exports.dependencies = ['Timestamp', 'UChildAdministrableERC20']

@@ -13,5 +13,9 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
+  },
+  globals: {
+    ethers: true,
+    deployments: true
   }
 }

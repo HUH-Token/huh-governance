@@ -3,10 +3,14 @@ import { ethers, waffle } from 'hardhat'
 import { use, expect } from 'chai'
 // eslint-disable-next-line no-unused-vars
 import { BN } from '@openzeppelin/test-helpers'
+
+// import '../test/chai-setup'
+
 import HUHGovernance from '../artifacts/contracts/HUHGovernance.sol/HUHGovernance.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 use(waffleChai)
+// use(waffleChai)
 
 const mockedDeploy = async () => {
   const LOCK_TIME = 1

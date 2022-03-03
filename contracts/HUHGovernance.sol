@@ -2,11 +2,9 @@ pragma solidity ^0.8.9;
 // SPDX-License-Identifier: MIT
 
 import "./TokenTimeLock.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract HUHGovernance is Context, Initializable{
+contract HUHGovernance is OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
@@ -17,7 +15,7 @@ contract HUHGovernance is Context, Initializable{
     Timestamp private timestamp;
     uint private maximumLockTime;
 
-    function initialize(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public initializer{
+    function initialize(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public {
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);

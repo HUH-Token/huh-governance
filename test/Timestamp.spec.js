@@ -1,9 +1,9 @@
 // We import Chai to use its asserting functions here.
 import { expect } from './chai-setup'
-
 describe('Timestamp contract', () => {
   const deploy = {}
   beforeEach(async () => {
+    // global deployments
     // eslint-disable-next-line no-undef
     await deployments.fixture(['Timestamp'])
     // eslint-disable-next-line no-undef
