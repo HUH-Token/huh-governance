@@ -1,5 +1,5 @@
 // We import Chai to use its asserting functions here.
-import { expect } from './chai-setup'
+import { expect } from './utils/chai-setup'
 describe('Timestamp contract', () => {
   const deploy = {}
   beforeEach(async () => {

@@ -1,10 +1,10 @@
-import { expect } from './chai-setup'
+import { expect } from './utils/chai-setup'
 
 describe('HUHGovernance contract - Administration', () => {
   const deploy = {}
   beforeEach(async () => {
     await deployments.fixture(['Timestamp', 'UChildAdministrableERC20', 'HUHGovernance', 'DefaultProxyAdmin'])
-    const [second, first, deployer, third, fourth] = await ethers.getSigners()
+    const [deployer, first, second, third, fourth] = await ethers.getSigners()
     deploy.defaultProxyAdmin = await ethers.getContract('DefaultProxyAdmin')
     deploy.deployer = deployer
     deploy.first = first
