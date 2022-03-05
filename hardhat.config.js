@@ -44,6 +44,10 @@ const config = {
     rinkeby: {
       url: nodeUrl('rinkeby'),
       accounts: accounts('rinkeby')
+    },
+    ganache: {
+      url: nodeUrl('localhost'),
+      accounts: accounts('localhost')
     }
   },
   namedAccounts: {

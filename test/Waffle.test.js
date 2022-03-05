@@ -37,7 +37,7 @@ describe('Token contract', function () {
     deploy = await setup()
   })
   // You can nest describe calls to create subsections.
-  it('', async () => {
+  it.only('', async () => {
     await deploy.Token.mock.balanceOf.withArgs(deploy.first.address).returns(5000)
     expect(await deploy.Token.balanceOf(deploy.first.address))
       .to.equal(5000)

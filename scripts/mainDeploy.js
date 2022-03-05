@@ -6,7 +6,7 @@ import { BN } from '@openzeppelin/test-helpers'
 
 // import '../test/chai-setup'
 
-import HUHGovernance from '../artifacts/contracts/HUHGovernance.sol/HUHGovernance.json'
+// import HUHGovernance from '../artifacts/contracts/HUHGovernance.sol/HUHGovernance.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 use(waffleChai)
@@ -27,7 +27,7 @@ const mockedDeploy = async () => {
   // let timestamp = await waffle.deployContract(first, Timestamp)
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
-  await timestamp.mock.caculateYearsDeltatime.returns(((50 * 3652425 + 5000) / 10000) * 24 * 60 * 60)
+  await timestamp.mock.caculateYearsDeltatime.withArgs(50).returns(((50 * 3652425 + 5000) / 10000) * 24 * 60 * 60)
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
   const acceptedToken = await waffle.deployContract(first, ERC20Mock, [
     'ERC20Mock name',
@@ -38,12 +38,26 @@ const mockedDeploy = async () => {
 }
 
 const rawDeploy = async (timestamp, acceptedToken, accounts, constants) => {
+  const { deploy } = deployments
   const [first, second, third, fourth] = accounts
-  const hUHGovernance = await waffle.deployContract(first, HUHGovernance, [
-    acceptedToken.address,
-    timestamp.address,
-    await timestamp.caculateYearsDeltatime(50)
-  ])
+  await deploy('HUHGovernance', {
+    from: first.address,
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+      execute: {
+        methodName: 'initialize',
+        args: [
+          acceptedToken.address,
+          timestamp.address,
+          50 // Maximum lock time in years
+        ]
+      }
+    },
+    log: true
+  })
+  const hUHGovernanceContract = await deployments.get('HUHGovernance')
+  // eslint-disable-next-line no-undef
+  const hUHGovernance = await ethers.getContractAt('HUHGovernance', hUHGovernanceContract.address)
   return { hUHGovernance, acceptedToken, first, second, third, fourth, timestamp, constants }
 }
 
