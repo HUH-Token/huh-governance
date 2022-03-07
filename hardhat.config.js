@@ -1,5 +1,6 @@
 import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
+import '@openzeppelin/hardhat-upgrades'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-solhint'
 import 'solidity-coverage'
@@ -51,8 +52,9 @@ const config = {
     }
   },
   namedAccounts: {
-    deployer: 0,
-    tokenOwner: 1
+    deployer: 2,
+    tokenOwner: 1,
+    proxy01Owner: 0
   },
   paths: {
     sources: 'contracts'

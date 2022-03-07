@@ -3,11 +3,12 @@ pragma solidity ^0.8.9;
 
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
+import "./HUHGovernance.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
+contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
@@ -26,14 +27,6 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
     function _authorizeUpgrade(address) internal override proxied {}
 
     constructor(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
-        init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
-    }
-
-    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied {
-        // solhint-disable-next-line security/no-inline-assembly
-        assembly {
-            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
-        }
         console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
@@ -112,7 +105,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
     }
 
     function _calculateVotingQuality(address voter) internal view returns(uint) {
-        uint voterConciousnessOnTheSubjectUnderVote = 1; // TODO This infor should ideally come from an Oracle.
+        uint voterConciousnessOnTheSubjectUnderVote = 2; // TODO This infor should ideally come from an Oracle.
         TokenTimeLock[] memory voterTokenTimeLocks = _getTokenTimeLocks(voter);
         uint accumulator = 0;
         for (uint i = 0; i < voterTokenTimeLocks.length; i++){

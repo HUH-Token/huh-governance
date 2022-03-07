@@ -2,7 +2,7 @@ const func = async (hre) => {
   // eslint-disable-next-line no-undef
   const { deploy } = deployments
   // eslint-disable-next-line no-undef
-  const { deployer, proxy01Owner } = await getNamedAccounts()
+  const { proxy01Owner } = await getNamedAccounts()
   // eslint-disable-next-line no-undef
   const timestampContract = await deployments.get('Timestamp')
   // eslint-disable-next-line no-undef
@@ -12,9 +12,10 @@ const func = async (hre) => {
   // eslint-disable-next-line no-undef
   const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
   const safeERC20 = SafeERC20.attach(tokenContract.address)
-  await deploy('HUHGovernance', {
-    contract: 'HUHGovernance',
-    from: deployer,
+  const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
+  await deploy('HUHGovernance_V2', {
+    contract: 'HUHGovernance_V2',
+    from: proxy01Owner,
     args: [
       safeERC20.address,
       timestamp.address,
@@ -22,22 +23,22 @@ const func = async (hre) => {
     ],
     proxy: {
       proxyContract: 'ERC1967Proxy',
-      proxyArgs: ['{implementation}', '{data}'],
-      execute: {
-        init: {
-          methodName: 'init',
-          args: [
-            proxy01Owner,
-            safeERC20.address,
-            timestamp.address,
-            50 // Maximum lock time in years
-          ]
-        }
-      }
+      proxyArgs: ['{implementation}', '{data}']
+      // execute: {
+      //   onUpgrade: {
+      //     methodName: 'onUpgrade',
+      //     args: [
+      //         huhGovernance_V1.address
+      //     ]
+      //   }
+      // }
     },
     log: true
   })
+  const huhGovernanceV2 = await ethers.getContractAt('HUHGovernance_V2', (await deployments.get('HUHGovernance_V2')).address)
+  console.log(huhGovernanceV1.address)
+  console.log(huhGovernanceV2.address)
 }
 export default func
-func.tags = ['HUHGovernance']
-module.exports.dependencies = ['Timestamp', 'Token']
+func.tags = ['HUHGovernance_V2']
+module.exports.dependencies = ['HUHGovernance']
