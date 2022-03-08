@@ -35,15 +35,15 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
     }
 
-    function calculateVotingQuality(address voter) public view returns(uint) {
+    function calculateVotingQuality(address voter) public view onlyProxyAdmin returns(uint) {
         return _calculateVotingQuality(voter);
     }
 
-    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view returns (TokenTimeLock) {
+    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view onlyProxyAdmin returns (TokenTimeLock) {
         return _getTokenTimeLock(timeLockHolder, tokenTimelockIndex);
     }
 
-    function getTokenTimeLocks(address timeLockHolder) public view returns (TokenTimeLock[] memory) {
+    function getTokenTimeLocks(address timeLockHolder) public view onlyProxyAdmin returns (TokenTimeLock[] memory) {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
@@ -57,7 +57,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
         }
     }
 
-    function getListOfTokenTimeLocks() public returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() public proxied returns (TokenTimeLock[] memory){
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
             TokenTimeLock selectedTimeLock = allTokenTimeLocksWithFunds[i];
             if (selectedTimeLock.amount() > 0){

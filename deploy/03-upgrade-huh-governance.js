@@ -1,3 +1,12 @@
+const IMPLEMENTATION_STORAGE = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
+
+const getImplementation = async (contract) => {
+  return await ethers.provider.getStorageAt(
+    contract.address,
+    IMPLEMENTATION_STORAGE
+  )
+}
+
 const func = async (hre) => {
   // eslint-disable-next-line no-undef
   const { deploy } = deployments
@@ -13,7 +22,12 @@ const func = async (hre) => {
   const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
   const safeERC20 = SafeERC20.attach(tokenContract.address)
   const huhGovernance = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
-  console.log(huhGovernance.address)
+
+  const previousImplementation = await getImplementation(huhGovernance)
+  console.log(`Previous implementation: ${previousImplementation}`)
+  // const implAddress = ethers.utils.hexStripZeros(implHex);
+  // console.log(implAddress);
+
   await deploy('HUHGovernance', {
     contract: 'HUHGovernance_V2',
     from: proxy01Owner,
@@ -38,16 +52,17 @@ const func = async (hre) => {
       //   init: {
       //     methodName: 'onUpgrade',
       //     args: [
-      //       huhGovernance.address
+      //       previousImplementation
       //     ]
       //   }
       // }
     },
     log: true
   })
-  // const huhGovernance2 = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
-  // console.log(huhGovernance2.address)
-  await huhGovernance.onUpgrade(huhGovernance.address)
+
+  const newImplementation = await getImplementation(huhGovernance)
+  console.log(`New implementation: ${newImplementation}`)
+  await huhGovernance.onUpgrade(previousImplementation)
 }
 export default func
 func.tags = ['HUHGovernance_V2']

@@ -37,22 +37,22 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
         }
         // __Ownable_init();
-        // __UUPSUpgradeable_init();
+        __UUPSUpgradeable_init();
         console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
     }
 
-    function calculateVotingQuality(address voter) public view returns(uint) {
+    function calculateVotingQuality(address voter) public view onlyProxyAdmin returns(uint) {
         return _calculateVotingQuality(voter);
     }
 
-    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view returns (TokenTimeLock) {
+    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view onlyProxyAdmin returns (TokenTimeLock) {
         return _getTokenTimeLock(timeLockHolder, tokenTimelockIndex);
     }
 
-    function getTokenTimeLocks(address timeLockHolder) public view returns (TokenTimeLock[] memory) {
+    function getTokenTimeLocks(address timeLockHolder) public view onlyProxyAdmin returns (TokenTimeLock[] memory) {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
@@ -66,7 +66,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
         }
     }
 
-    function getListOfTokenTimeLocks() public returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() public proxied returns (TokenTimeLock[] memory){
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
             TokenTimeLock selectedTimeLock = allTokenTimeLocksWithFunds[i];
             if (selectedTimeLock.amount() > 0){
