@@ -3,9 +3,10 @@ pragma solidity ^0.8.9;
 
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
-import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
-import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
 contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
@@ -25,15 +26,18 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
 
     function _authorizeUpgrade(address) internal override proxied {}
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
         init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
     }
 
-    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied {
+    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) proxied initializer public {
         // solhint-disable-next-line security/no-inline-assembly
         assembly {
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
         }
+        // __Ownable_init();
+        // __UUPSUpgradeable_init();
         console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
@@ -52,7 +56,8 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance _previousHUHGovernance) public {
+    function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
+        console.log("\nUpgrading Contract");
         TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
         for (uint i = 0; i < importedTokenTimeLocks.length; i++){
             TokenTimeLock selectedTimeLock = importedTokenTimeLocks[i];
@@ -61,7 +66,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
         }
     }
 
-    function getListOfTokenTimeLocks() public onlyProxyAdmin returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() public returns (TokenTimeLock[] memory){
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
             TokenTimeLock selectedTimeLock = allTokenTimeLocksWithFunds[i];
             if (selectedTimeLock.amount() > 0){

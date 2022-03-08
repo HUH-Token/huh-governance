@@ -1,8 +1,8 @@
 import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
-import '@openzeppelin/hardhat-upgrades'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-solhint'
+import '@openzeppelin/hardhat-upgrades'
 import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 
