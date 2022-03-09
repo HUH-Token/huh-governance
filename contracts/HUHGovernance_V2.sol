@@ -48,6 +48,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
     }
 
     function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
+        // revert();
         console.log("\nUpgrading Contract");
         TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
         for (uint i = 0; i < importedTokenTimeLocks.length; i++){

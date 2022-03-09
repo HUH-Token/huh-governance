@@ -38,31 +38,21 @@ const func = async (hre) => {
     ],
     proxy: {
       proxyContract: 'ERC1967Proxy',
-      proxyArgs: ['{implementation}', '{data}']
-      // execute: {
-      //   // init: {
-      //   //   methodName: 'init',
-      //   //   args: [
-      //   //     proxy01Owner,
-      //   //     safeERC20.address,
-      //   //     timestamp.address,
-      //   //     50 // Maximum lock time in years
-      //   //   ]
-      //   // },
-      //   init: {
-      //     methodName: 'onUpgrade',
-      //     args: [
-      //       previousImplementation
-      //     ]
-      //   }
-      // }
+      proxyArgs: ['{implementation}', '{data}'],
+      execute: {
+        onUpgrade: {
+          methodName: 'onUpgrade',
+          args: [
+            previousImplementation
+          ]
+        }
+      }
     },
     log: true
   })
 
   const newImplementation = await getImplementation(huhGovernance)
   console.log(`New implementation: ${newImplementation}`)
-  await huhGovernance.onUpgrade(previousImplementation)
 }
 export default func
 func.tags = ['HUHGovernance_V2']
