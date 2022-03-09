@@ -87,10 +87,6 @@ describe('HUHGovernance contract', () => {
   beforeEach(async () => {
     deploy = await mockedDeployFixture()
   })
-  it('', async () => {
-    const tokenTimeLocks = await deploy.hUHGovernance.getMyTokenTimeLocks()
-    console.log(tokenTimeLocks)
-  })
   describe('Freeze', async () => {
     let depositValue
     beforeEach(async () => {
