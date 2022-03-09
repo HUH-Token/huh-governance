@@ -4,11 +4,11 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
-contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
+contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
@@ -36,7 +36,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, ContextUpgradeable {
         assembly {
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
         }
-        // __Ownable_init();
+        __Ownable_init();
         __UUPSUpgradeable_init();
         console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;

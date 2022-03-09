@@ -5,11 +5,11 @@ import "./HUHGovernance.sol";
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
-contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
+contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
@@ -48,7 +48,6 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, ContextUpgradeable {
     }
 
     function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
-        // revert();
         console.log("\nUpgrading Contract");
         TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
         for (uint i = 0; i < importedTokenTimeLocks.length; i++){

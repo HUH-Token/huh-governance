@@ -3,12 +3,8 @@ import { expect } from './utils/chai-setup'
 describe('Timestamp contract', () => {
   const deploy = {}
   beforeEach(async () => {
-    // global deployments
-    // eslint-disable-next-line no-undef
     await deployments.fixture(['Timestamp'])
-    // eslint-disable-next-line no-undef
     const [first] = await ethers.getSigners()
-    // eslint-disable-next-line no-undef
     deploy.timestamp = await ethers.getContract('Timestamp')
     deploy.first = first
   })

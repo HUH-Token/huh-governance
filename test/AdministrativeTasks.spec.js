@@ -1,24 +1,36 @@
 import { expect } from './utils/chai-setup'
+import { setupUsers, connectAndGetNamedAccounts } from './utils/index'
+
+const setup = async () => {
+  await deployments.fixture(['Token', 'Timestamp', 'HUHGovernance'])
+  const contracts = {
+    HUHGovernance: (await ethers.getContract('HUHGovernance'))
+  }
+  const namedAccounts = await connectAndGetNamedAccounts(contracts)
+  // get fet unnammedAccounts (which are basically all accounts not named in the config, useful for tests as you can be sure they do not have been given token for example)
+  // we then use the utilities function to generate user object/
+  // These object allow you to write things like `users[0].Token.transfer(....)`
+  const users = await setupUsers(await getUnnamedAccounts(), contracts)
+  // finally we return the whole object (including the tokenOwner setup as a User object)
+  return {
+    ...contracts,
+    users,
+    ...namedAccounts
+  }
+}
 
 describe('HUHGovernance contract - Administration', () => {
-  const deploy = {}
+  let deploy = {}
   beforeEach(async () => {
-    await deployments.fixture(['Timestamp', 'UChildAdministrableERC20', 'HUHGovernance', 'DefaultProxyAdmin'])
-    const [deployer, first, second, third, fourth] = await ethers.getSigners()
-    deploy.defaultProxyAdmin = await ethers.getContract('DefaultProxyAdmin')
-    deploy.deployer = deployer
-    deploy.first = first
-    deploy.second = second
-    deploy.third = third
-    deploy.fourth = fourth
+    deploy = await setup()
   })
   it('Ownership transfer', async () => {
-    const firstOwner = await deploy.defaultProxyAdmin.owner()
+    const firstOwner = await deploy.HUHGovernance.owner()
     expect(firstOwner).to.equal(deploy.deployer.address)
-    await expect(deploy.defaultProxyAdmin.connect(deploy.deployer).transferOwnership(deploy.second.address))
-      .to.emit(deploy.defaultProxyAdmin, 'OwnershipTransferred')
-      .withArgs(deploy.deployer.address, deploy.second.address)
-    const secondOwner = await deploy.defaultProxyAdmin.owner()
-    expect(secondOwner).to.equal(deploy.second.address)
+    await expect(deploy.HUHGovernance.connect(deploy.deployer).transferOwnership(deploy.tokenOwner.address))
+      .to.emit(deploy.HUHGovernance, 'OwnershipTransferred')
+      .withArgs(deploy.deployer.address, deploy.tokenOwner.address)
+    const secondOwner = await deploy.HUHGovernance.owner()
+    expect(secondOwner).to.equal(deploy.tokenOwner.address)
   })
 })

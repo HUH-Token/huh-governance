@@ -16,6 +16,9 @@ module.exports = {
   },
   globals: {
     ethers: true,
-    deployments: true
+    deployments: true,
+    getNamedAccounts: true,
+    waffle: true,
+    getUnnamedAccounts: true
   }
 }
