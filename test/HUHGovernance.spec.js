@@ -109,6 +109,19 @@ describe('HUHGovernance contract', () => {
         .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
         .withArgs(deploy.deployer.address, depositValue, forHowLong)
     })
+    it('Revert when trying to freeze a null value.', async () => {
+      const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
+      await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
+        .to.be.revertedWith('Too low amount!')
+    })
+    // it.only('Revert when trying to release a null deposit', async () => {
+    //   const forHowLong = 24 * 60 * 60
+    //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
+    //   await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong)
+    //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
+    //   await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
+    //     .to.be.revertedWith('TokenTimeLock: no tokens to release')
+    // })
     describe('After Staking', async () => {
       let forHowLong
       beforeEach(async () => {

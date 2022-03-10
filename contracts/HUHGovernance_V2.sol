@@ -77,6 +77,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     
     function _freezeHuhTokens(address freezer, uint amount, uint lockTime) internal {
         require(lockTime <= maximumLockTime , "Too long lockTime!");
+        require(amount > 0, "Too low amount!");
         uint timeStamp = timestamp.getTimestamp();
         TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, timeLockedToken, freezer, timeStamp + lockTime);
         tokenTimeLocks[freezer].push(tokenTimeLock);
