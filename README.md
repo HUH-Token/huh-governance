@@ -1,15 +1,40 @@
-# Basic Sample Hardhat Project
+# HUH Governance Smart Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+# Let's Go Brandon Coin smart contracts
+[![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
+[![CI](https://github.com/HUH-Token/huh-governance/actions/workflows/CI.yaml/badge.svg)](https://github.com/HUH-Token/huh-governance/actions/workflows/CI.yaml)
+[![Coverage Status](https://coveralls.io/repos/github/HUH-Token/huh-governance/badge.svg?branch=main)](https://coveralls.io/github/HUH-Token/huh-governance?branch=main)
+[![GitHub license](https://img.shields.io/github/license/HUH-Token/huh-governance)](https://github.com/HUH-Token/huh-governance)
 
-Try running some of the following tasks:
+## 🚧 Development
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
+### 🐑 Repository cloning
+```terminal
+git clone https://github.com/HUH-Token/huh-governance.git
+```
+
+### 📦 Dependencies Installation
+```terminal
+yarn
+```
+
+👨‍💻 Happy coding!
+
+### 👕 Linting
+
+```terminal
+yarn solhint
+yarn lint
+```
+
+### ✅ Testing
+
+```terminal
+yarn test
+```
+
+#### ✔️ With code coverage
+
+```terminal
+yarn coveralls
 ```
