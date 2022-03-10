@@ -4,7 +4,7 @@
   "description": "HUH token project",
   "license": "MIT",
   "scripts": {
-    "postinstall": "yarn add -D hardhat-deploy-ethers",
+    "postinstall": "npm install --save-dev hardhat-deploy-ethers && rm package-lock.json",
     "hardhat": "node --require esm node_modules/.bin/hardhat",
     "flatten": "run(){ yarn hardhat flatten contracts/$1.sol > Flat$1.sol; }; run",
     "compile": "yarn hardhat compile",
