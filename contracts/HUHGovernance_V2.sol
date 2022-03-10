@@ -35,15 +35,15 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
     }
 
-    function calculateVotingQuality(address voter) public view onlyProxyAdmin returns(uint) {
+    function calculateVotingQuality(address voter) public view onlyOwner returns(uint) {
         return _calculateVotingQuality(voter);
     }
 
-    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view onlyProxyAdmin returns (TokenTimeLock) {
+    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view onlyOwner returns (TokenTimeLock) {
         return _getTokenTimeLock(timeLockHolder, tokenTimelockIndex);
     }
 
-    function getTokenTimeLocks(address timeLockHolder) public view onlyProxyAdmin returns (TokenTimeLock[] memory) {
+    function getTokenTimeLocks(address timeLockHolder) public view onlyOwner returns (TokenTimeLock[] memory) {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
