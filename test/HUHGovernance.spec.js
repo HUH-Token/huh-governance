@@ -21,6 +21,10 @@ import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '.
 //   }
 // }
 
+const calculateYearsDeltaTime = (years) => {
+  return (((years * 3652425 + 5000) / 10000) * 24 * 60 * 60)  
+}
+
 const mockedDeployFixture = deployments.createFixture(async () => {
   // await deployments.fixture(); // ensure you start from a fresh deployments
   const { deploy } = deployments
@@ -39,7 +43,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   // let timestamp = await waffle.deployContract(first, Timestamp)
   const timestamp = await waffle.deployMockContract(namedSigners.deployer, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
-  await timestamp.mock.caculateYearsDeltatime.withArgs(50).returns(((50 * 3652425 + 5000) / 10000) * 24 * 60 * 60)
+  await timestamp.mock.caculateYearsDeltatime.withArgs(50).returns(calculateYearsDeltaTime(50))
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
   const acceptedToken = await waffle.deployContract(namedSigners.deployer, ERC20Mock, [
     'ERC20Mock name',
@@ -114,6 +118,12 @@ describe('HUHGovernance contract', () => {
       await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
         .to.be.revertedWith('Too low amount!')
     })
+    it('Revert when trying to freeze for longer than 50 years.', async () => {
+      await deploy.timestamp.mock.caculateYearsDeltatime.withArgs(51).returns(calculateYearsDeltaTime(51))
+      const forHowLong = await deploy.timestamp.caculateYearsDeltatime(51)
+      await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
+        .to.be.revertedWith('Too long lockTime!')
+    })    
     // it.only('Revert when trying to release a null deposit', async () => {
     //   const forHowLong = 24 * 60 * 60
     //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
