@@ -1,6 +1,5 @@
 # HUH Governance Smart Contracts
 
-# Let's Go Brandon Coin smart contracts
 [![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
 [![CI](https://github.com/HUH-Token/huh-governance/actions/workflows/CI.yaml/badge.svg)](https://github.com/HUH-Token/huh-governance/actions/workflows/CI.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/HUH-Token/huh-governance/badge.svg?branch=main)](https://coveralls.io/github/HUH-Token/huh-governance?branch=main)
