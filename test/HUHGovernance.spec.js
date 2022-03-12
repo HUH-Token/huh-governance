@@ -22,7 +22,7 @@ import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '.
 // }
 
 const calculateYearsDeltaTime = (years) => {
-  return (((years * 3652425 + 5000) / 10000) * 24 * 60 * 60)  
+  return (((years * 3652425 + 5000) / 10000) * 24 * 60 * 60)
 }
 
 const mockedDeployFixture = deployments.createFixture(async () => {
@@ -123,7 +123,7 @@ describe('HUHGovernance contract', () => {
       const forHowLong = await deploy.timestamp.caculateYearsDeltatime(51)
       await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
         .to.be.revertedWith('Too long lockTime!')
-    })    
+    })
     // it.only('Revert when trying to release a null deposit', async () => {
     //   const forHowLong = 24 * 60 * 60
     //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
