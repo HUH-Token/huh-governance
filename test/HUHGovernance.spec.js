@@ -31,7 +31,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   await deployments.fixture(['Token'])
   const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
-  const FREEZE_AMOUNT = INITIAL_BALANCE/10
+  const FREEZE_AMOUNT = INITIAL_BALANCE / 10
   const DEPLOY_TIMESTAMP = 1
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later

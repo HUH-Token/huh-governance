@@ -56,15 +56,16 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
-        console.log("\nUpgrading Contract");
-        TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
-        for (uint i = 0; i < importedTokenTimeLocks.length; i++){
-            TokenTimeLock selectedTimeLock = importedTokenTimeLocks[i];
-            tokenTimeLocks[selectedTimeLock.beneficiary()].push(selectedTimeLock);
-            allTokenTimeLocks.push(selectedTimeLock);
-        }
-    }
+    // TODO uncomment on upgraded versions!
+    // function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
+    //     console.log("\nUpgrading Contract");
+    //     TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
+    //     for (uint i = 0; i < importedTokenTimeLocks.length; i++){
+    //         TokenTimeLock selectedTimeLock = importedTokenTimeLocks[i];
+    //         tokenTimeLocks[selectedTimeLock.beneficiary()].push(selectedTimeLock);
+    //         allTokenTimeLocks.push(selectedTimeLock);
+    //     }
+    // }
 
     function getListOfTokenTimeLocks() public proxied returns (TokenTimeLock[] memory){
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
