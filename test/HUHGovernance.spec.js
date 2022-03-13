@@ -31,6 +31,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   await deployments.fixture(['Token'])
   const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
+  const FREEZE_AMOUNT = INITIAL_BALANCE/10
   const DEPLOY_TIMESTAMP = 1
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
@@ -38,7 +39,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   const TOKEN_NAME = 'A Token name'
   const TOKEN_SYMBOL = 'A Token symbol'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
-  const constants = { LOCK_TIME, INITIAL_BALANCE, TIMESTAMPS, TOKEN }
+  const constants = { LOCK_TIME, INITIAL_BALANCE, FREEZE_AMOUNT, TIMESTAMPS, TOKEN }
   const namedSigners = await getNamedSigners()
   // let timestamp = await waffle.deployContract(first, Timestamp)
   const timestamp = await waffle.deployMockContract(namedSigners.deployer, Timestamp.abi)
@@ -51,6 +52,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
     namedSigners.deployer.address,
     constants.INITIAL_BALANCE
   ])
+  await acceptedToken.transfer(namedSigners.tokenOwner.address, constants.FREEZE_AMOUNT)
   await deploy('HUHGovernance', {
     contract: 'HUHGovernance',
     from: namedSigners.deployer.address,
@@ -94,7 +96,7 @@ describe('HUHGovernance contract', () => {
   describe('Freeze', async () => {
     let depositValue
     beforeEach(async () => {
-      depositValue = deploy.constants.INITIAL_BALANCE
+      depositValue = deploy.constants.FREEZE_AMOUNT
       await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
     })
     it('Calculate right zero voting quality', async () => {
@@ -138,6 +140,40 @@ describe('HUHGovernance contract', () => {
         forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
         await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
       })
+      describe('Owners\'s tests', async () => {
+        beforeEach(async () => {
+          await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
+          await deploy.hUHGovernance.connect(deploy.tokenOwner).freezeMyHuhTokens(depositValue, forHowLong)
+        })
+        describe('Calculate others\' voting quality', async () => {
+          it('Owner should be entitled', async () => {
+            await deploy.hUHGovernance.connect(deploy.deployer).calculateVotingQuality(deploy.tokenOwner.address)
+          })
+          it('Non owners should not be entitled', async () => {
+            await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).calculateVotingQuality(deploy.deployer.address))
+              .to.be.revertedWith('Ownable: caller is not the owner')
+          })
+        })
+        describe('Get others\' token time lock', async () => {
+          it('Owner should be entitled', async () => {
+            await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLock(deploy.tokenOwner.address, 0)
+          })
+          it('Non owners should not be entitled', async () => {
+            await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLock(deploy.deployer.address, 0))
+              .to.be.revertedWith('Ownable: caller is not the owner')
+          })
+        })
+        describe('Get others\' token time locks', async () => {
+          it('Owner should be entitled', async () => {
+            const timeLocks = await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLocks(deploy.tokenOwner.address)
+            expect(timeLocks.length).to.be.greaterThan(0)
+          })
+          it('Non owners should not be entitled', async () => {
+            await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLocks(deploy.deployer.address))
+              .to.be.revertedWith('Ownable: caller is not the owner')
+          })
+        })
+      })
       describe('Check token time lock', async () => {
         let tokenTimeLock
         beforeEach(async () => {
@@ -149,12 +185,12 @@ describe('HUHGovernance contract', () => {
           expect(await tokenTimeLock.deltaTime()).to.be.equal(forHowLong)
         })
         it('amount', async () => {
-          expect(await tokenTimeLock.amount()).to.be.equal(deploy.constants.INITIAL_BALANCE)
+          expect(await tokenTimeLock.amount()).to.be.equal(deploy.constants.FREEZE_AMOUNT)
         })
       })
       it('Calculate my voting quality', async () => {
         expect(await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality())
-          .to.be.equal(1577890800000)
+          .to.be.equal(157789080000)
       })
     })
   })
@@ -173,7 +209,7 @@ describe('HUHGovernance contract', () => {
       let forHowLong
       beforeEach(async () => {
         forHowLong = 24 * 60 * 60
-        const depositValue = deploy.constants.INITIAL_BALANCE
+        const depositValue = deploy.constants.FREEZE_AMOUNT
         await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
         await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
         await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
@@ -205,7 +241,7 @@ describe('HUHGovernance contract', () => {
         it('Emit UnfrozenHuhTokens', async () => {
           await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
             .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-            .withArgs(deploy.deployer.address, deploy.constants.INITIAL_BALANCE, forHowLong)
+            .withArgs(deploy.deployer.address, deploy.constants.FREEZE_AMOUNT, forHowLong)
         })
         it('should be able to get tokenTimeLock from existing index', async () => {
           const tokenTimeLockAddress = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLock(0)
@@ -232,7 +268,7 @@ describe('HUHGovernance contract', () => {
       let secondDeposit
       beforeEach(async () => {
         forHowLong = 24 * 60 * 60
-        const totalDeposit = deploy.constants.INITIAL_BALANCE
+        const totalDeposit = deploy.constants.FREEZE_AMOUNT
         firstDeposit = Math.round(totalDeposit / 3)
         secondDeposit = totalDeposit - firstDeposit
         await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, totalDeposit)
