@@ -109,6 +109,13 @@ describe('HUHGovernance contract', () => {
       await expect(deploy.hUHGovernance.freezeMyHuhTokens(depositValue, forHowLong))
         .to.be.revertedWith('TokenTimeLock: release time is before current time')
     })
+    it('Emit FrozenHuhTokens when freezing for a third party', async () => {
+      await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
+      const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
+      await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeHuhTokens(deploy.tokenOwner.address, depositValue, forHowLong))
+        .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
+        .withArgs(deploy.tokenOwner.address, depositValue, forHowLong)
+    })
     it('Emit FrozenHuhTokens', async () => {
       const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
       await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong))

@@ -77,24 +77,24 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return allTokenTimeLocksWithFunds;
     }
 
-    function freezeHuhTokens(address recipient, uint amount, uint lockTime) public {
-        _freezeHuhTokens(recipient, amount, lockTime);
+    function freezeHuhTokens(address beneficiary, uint amount, uint lockTime) public {
+        _freezeHuhTokens(_msgSender(), beneficiary, amount, lockTime);
     }
 
     function freezeMyHuhTokens(uint amount, uint lockTime) public {
-        _freezeHuhTokens(_msgSender(), amount, lockTime);
+        _freezeHuhTokens(_msgSender(), _msgSender(), amount, lockTime);
     }
     
-    function _freezeHuhTokens(address freezer, uint amount, uint lockTime) internal {
+    function _freezeHuhTokens(address freezer, address beneficiary, uint amount, uint lockTime) internal {
         require(lockTime <= maximumLockTime , "Too long lockTime!");
         require(amount > 0, "Too low amount!");
         uint timeStamp = timestamp.getTimestamp();
-        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, timeLockedToken, freezer, timeStamp + lockTime);
-        tokenTimeLocks[freezer].push(tokenTimeLock);
+        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, timeLockedToken, beneficiary, timeStamp + lockTime);
+        tokenTimeLocks[beneficiary].push(tokenTimeLock);
         // record for upgradeability pourpose.
         allTokenTimeLocks.push(tokenTimeLock);
         timeLockedToken.safeTransferFrom(freezer, address(tokenTimeLock), amount);
-        emit FrozenHuhTokens(freezer, amount, lockTime);
+        emit FrozenHuhTokens(beneficiary, amount, lockTime);
     }
 
     function unfreezeHuhTokens(uint tokenTimelockIndex) public{
