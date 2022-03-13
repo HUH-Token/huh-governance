@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -67,7 +68,8 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     //     }
     // }
 
-    function getListOfTokenTimeLocks() public proxied returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() public onlyOwner returns (TokenTimeLock[] memory){
+        require(Address.isContract(owner()), "The owner must be a contract!");
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
             TokenTimeLock selectedTimeLock = allTokenTimeLocksWithFunds[i];
             if (selectedTimeLock.amount() > 0){

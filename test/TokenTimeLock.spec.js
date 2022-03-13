@@ -2,7 +2,7 @@ import { expect } from './utils/chai-setup'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import TokenTimeLock from '../artifacts/contracts/TokenTimeLock.sol/TokenTimeLock.json'
-import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from './utils/index'
+import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 
 const mockedDeployFixture = deployments.createFixture(async () => {
   // await deployments.fixture(); // ensure you start from a fresh deployments

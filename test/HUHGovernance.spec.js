@@ -1,7 +1,7 @@
 import { expect } from './utils/chai-setup'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
-import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from './utils/index'
+import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 
 // const setup = async () => {
 //   await deployments.fixture(['Token', 'Timestamp', 'HUHGovernance'])

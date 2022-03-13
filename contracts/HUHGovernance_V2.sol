@@ -47,7 +47,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
+    function onUpgrade(HUHGovernance _previousHUHGovernance) public {
         console.log("\nUpgrading Contract");
         TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
         for (uint i = 0; i < importedTokenTimeLocks.length; i++){
@@ -57,7 +57,8 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function getListOfTokenTimeLocks() public proxied returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() public onlyOwner returns (TokenTimeLock[] memory){
+        require(Address.isContract(owner()), "The owner must be a contract!");
         for (uint i = 0; i < allTokenTimeLocksWithFunds.length; i++){
             TokenTimeLock selectedTimeLock = allTokenTimeLocksWithFunds[i];
             if (selectedTimeLock.amount() > 0){

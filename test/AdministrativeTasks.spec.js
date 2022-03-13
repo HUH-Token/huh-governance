@@ -1,5 +1,5 @@
 import { expect } from './utils/chai-setup'
-import { setupUsers, connectAndGetNamedAccounts } from './utils/index'
+import { setupUsers, connectAndGetNamedAccounts } from '../src/signers'
 
 const setup = async () => {
   await deployments.fixture(['Token', 'Timestamp', 'HUHGovernance'])
