@@ -354,6 +354,10 @@ describe('HUHGovernance contract', () => {
     })
   })
   describe('After upgrade', async () => {
+    let votingQualityMultiplier
+    beforeEach(async () => {
+      votingQualityMultiplier = 2
+    })
     describe('Basic test', async () => {
       let depositValue
       let depositValue2
@@ -507,7 +511,7 @@ describe('HUHGovernance contract', () => {
         it('Calculate my voting quality', async () => {
           await upgrade(deploy)
           expect(await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality())
-            .to.be.equal(2 * 157789080000)
+            .to.be.equal(votingQualityMultiplier * 157789080000)
         })
       })
     })
@@ -647,7 +651,7 @@ describe('HUHGovernance contract', () => {
             it('Reduce voting quality', async () => {
               await upgrade(deploy)
               const finalVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              expect(finalVotingQuality / 2).to.be.below(initialVotingQuality)
+              expect(finalVotingQuality / votingQualityMultiplier).to.be.below(initialVotingQuality)
             })
             it('Owner should be able to get reduced list of token time locks', async () => {
               await upgrade(deploy)
