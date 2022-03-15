@@ -6,7 +6,7 @@ const upgrade = async (deployArtifacts) => {
   const { proxy01Owner, deployer } = await getNamedSigners()
 
   const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-  console.log(`Previous implementation: ${previousImplementation}`)
+  //   console.log(`Previous implementation: ${previousImplementation}`)
 
   await deploy('HUHGovernance', {
     contract: 'HUHGovernance_V2',
@@ -32,7 +32,7 @@ const upgrade = async (deployArtifacts) => {
   })
 
   const newImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-  console.log(`New implementation: ${newImplementation}`)
+  //   console.log(`New implementation: ${newImplementation}`)
   const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
   await huhGovernanceV1.connect(deployer).transferOwnership(newImplementation)
   const HUHGovernanceV2Contract = await ethers.getContractFactory('contracts/HUHGovernance_V2.sol:HUHGovernance_V2')

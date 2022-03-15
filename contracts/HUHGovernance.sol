@@ -57,14 +57,8 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     // TODO uncomment on upgraded versions!
-    // function onUpgrade(HUHGovernance _previousHUHGovernance) public proxied {
+    // function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public proxied {
     //     console.log("\nUpgrading Contract");
-    //     TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
-    //     for (uint i = 0; i < importedTokenTimeLocks.length; i++){
-    //         TokenTimeLock selectedTimeLock = importedTokenTimeLocks[i];
-    //         tokenTimeLocks[selectedTimeLock.beneficiary()].push(selectedTimeLock);
-    //         allTokenTimeLocks.push(selectedTimeLock);
-    //     }
     // }
 
     function getListOfTokenTimeLocks() public view onlyOwner returns (TokenTimeLock[] memory){

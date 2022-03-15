@@ -46,7 +46,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public view {
+    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public proxied {
         console.log("\nUpgrading Contract");
     }
 
