@@ -28,9 +28,11 @@ contract TokenTimeLock is Ownable {
     // deltatime from lock timestamp to release time
     uint256 immutable private _deltaTime;
 
+    uint256 immutable private _position;
+
     Timestamp private timestamp;
 
-    constructor (Timestamp _timestamp, IERC20 token_, address beneficiary_, uint256 releaseTime_) {
+    constructor (Timestamp _timestamp, IERC20 token_, address beneficiary_, uint256 releaseTime_, uint256 position_) {
         timestamp = _timestamp;
         uint256 rightNow = timestamp.getTimestamp();
         // solhint-disable-next-line not-rely-on-time, reason-string
@@ -39,6 +41,14 @@ contract TokenTimeLock is Ownable {
         _token = token_;
         _beneficiary = beneficiary_;
         _releaseTime = releaseTime_;
+        _position = position_;
+    }
+
+    /**
+     * @return the position of the TokenTimeLock.
+     */
+    function position() public view virtual returns (uint256) {
+        return _position;
     }
 
     /**

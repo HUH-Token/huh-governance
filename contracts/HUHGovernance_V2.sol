@@ -20,7 +20,6 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     
     // records for upgradeability pourpose.
     TokenTimeLock[] private allTokenTimeLocks;
-    TokenTimeLock[] private allTokenTimeLocksWithFunds;
     
     Timestamp private timestamp;
     uint private maximumLockTime;
@@ -47,25 +46,12 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance _previousHUHGovernance) public {
+    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public view {
         console.log("\nUpgrading Contract");
-        TokenTimeLock[] memory importedTokenTimeLocks = _previousHUHGovernance.getListOfTokenTimeLocks();
-        for (uint i = 0; i < importedTokenTimeLocks.length; i++){
-            TokenTimeLock selectedTimeLock = importedTokenTimeLocks[i];
-            tokenTimeLocks[selectedTimeLock.beneficiary()].push(selectedTimeLock);
-            allTokenTimeLocks.push(selectedTimeLock);
-        }
     }
 
-    function getListOfTokenTimeLocks() public onlyOwner returns (TokenTimeLock[] memory){
-        require(Address.isContract(owner()), "The owner must be a contract!");
-        for (uint i = 0; i < allTokenTimeLocks.length; i++){
-            TokenTimeLock selectedTimeLock = allTokenTimeLocks[i];
-            if (selectedTimeLock.amount() > 0){
-                allTokenTimeLocksWithFunds.push(selectedTimeLock);
-            }
-        }
-        return allTokenTimeLocksWithFunds;
+    function getListOfTokenTimeLocks() public view onlyOwner returns (TokenTimeLock[] memory){
+        return allTokenTimeLocks;
     }
 
     function freezeHuhTokens(address beneficiary, uint amount, uint lockTime) public {
@@ -80,13 +66,14 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         require(lockTime <= maximumLockTime , "Too long lockTime!");
         require(amount > 0, "Too low amount!");
         uint timeStamp = timestamp.getTimestamp();
-        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, timeLockedToken, beneficiary, timeStamp + lockTime);
+        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, timeLockedToken, beneficiary, timeStamp + lockTime, allTokenTimeLocks.length);
         tokenTimeLocks[beneficiary].push(tokenTimeLock);
         // record for upgradeability pourpose.
         allTokenTimeLocks.push(tokenTimeLock);
         timeLockedToken.safeTransferFrom(freezer, address(tokenTimeLock), amount);
         emit FrozenHuhTokens(beneficiary, amount, lockTime);
     }
+
 
     function unfreezeHuhTokens(uint tokenTimelockIndex) public{
         address unfreezer = _msgSender();
@@ -133,6 +120,8 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     function _takeTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) internal returns (TokenTimeLock) {
         TokenTimeLock element = tokenTimeLocks[timeLockHolder][tokenTimelockIndex];
         tokenTimeLocks[timeLockHolder][tokenTimelockIndex] = tokenTimeLocks[timeLockHolder][tokenTimeLocks[timeLockHolder].length-1];
+        allTokenTimeLocks[element.position()] = allTokenTimeLocks[allTokenTimeLocks.length-1];
+        allTokenTimeLocks.pop();
         tokenTimeLocks[timeLockHolder].pop();
         return element;
     }

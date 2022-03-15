@@ -34,7 +34,8 @@ const mockedDeployFixture = deployments.createFixture(async () => {
     timestamp.address,
     acceptedToken.address,
     namedSigners.deployer.address,
-    constants.TIMESTAMPS.DEPLOY + 24 * 60 * 60
+    constants.TIMESTAMPS.DEPLOY + 24 * 60 * 60,
+    0
   ])
   return {
     constants,
