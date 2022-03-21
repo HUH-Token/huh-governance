@@ -2,7 +2,7 @@
 // The line above is recommended and let you define the license of your contract
 // Solidity files have to start with this pragma.
 // It will be used by the Solidity compiler to validate its version.
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 
 // This is the main building block for smart contracts.
