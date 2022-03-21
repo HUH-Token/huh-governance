@@ -1,12 +1,19 @@
+import { getNamedSigners } from '../src/signers'
+
 const func = async (hre) => {
-  const { deployments, getNamedAccounts } = hre
+  const { deployments } = hre
   const { deploy } = deployments
-  const { deployer, tokenOwner } = await getNamedAccounts()
-  await deploy('Token', {
-    from: deployer,
-    args: [tokenOwner],
+  const { deployer } = await getNamedSigners()
+  await deploy('ERC20Mock', {
+    from: deployer.address,
+    args: [
+      'My Hardhat Token',
+      'MBT',
+      deployer.address,
+      1000
+    ],
     log: true
   })
 }
 export default func
-func.tags = ['Token']
+func.tags = ['ERC20Mock']

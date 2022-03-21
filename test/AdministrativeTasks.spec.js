@@ -2,7 +2,7 @@ import { expect } from './utils/chai-setup'
 import { setupUsers, connectAndGetNamedAccounts } from '../src/signers'
 
 const setup = async () => {
-  await deployments.fixture(['Token', 'Timestamp', 'HUHGovernance'])
+  await deployments.fixture(['ERC20Mock', 'Timestamp', 'HUHGovernance'])
   const contracts = {
     HUHGovernance: (await ethers.getContract('HUHGovernance'))
   }

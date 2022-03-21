@@ -1,13 +1,12 @@
 import { expect } from './utils/chai-setup'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
-import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import TokenTimeLock from '../artifacts/contracts/TokenTimeLock.sol/TokenTimeLock.json'
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 
 const mockedDeployFixture = deployments.createFixture(async () => {
   // await deployments.fixture(); // ensure you start from a fresh deployments
   // const { deploy } = deployments
-  await deployments.fixture(['Token'])
+  await deployments.fixture(['ERC20Mock'])
   const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
   const DEPLOY_TIMESTAMP = 1
@@ -25,12 +24,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
   await timestamp.mock.caculateYearsDeltatime.withArgs(50).returns(((50 * 3652425 + 5000) / 10000) * 24 * 60 * 60)
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
-  const acceptedToken = await waffle.deployContract(namedSigners.deployer, ERC20Mock, [
-    'ERC20Mock name',
-    'ERC20Mock symbol',
-    namedSigners.deployer.address,
-    constants.INITIAL_BALANCE
-  ])
+  const acceptedToken = await ethers.getContract('ERC20Mock')
   const tokenTimeLock = await waffle.deployContract(namedSigners.deployer, TokenTimeLock, [
     timestamp.address,
     acceptedToken.address,
@@ -61,8 +55,8 @@ describe('TokenTimeLock contract', () => {
     let depositAmount
     beforeEach(async () => {
       depositAmount = deploy.constants.INITIAL_BALANCE
-      await deploy.acceptedToken.increaseAllowance(deploy.deployer.address, depositAmount)
-      await deploy.acceptedToken.transferFrom(deploy.deployer.address, deploy.tokenTimeLock.address, depositAmount)
+      await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.deployer.address, depositAmount)
+      await deploy.acceptedToken.connect(deploy.deployer).transfer(deploy.tokenTimeLock.address, depositAmount)
     })
     it('Should emit ReleasedTokens event', async () => {
       await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)

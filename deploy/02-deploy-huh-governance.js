@@ -5,7 +5,7 @@ const func = async (hre) => {
   const { deployer, proxy01Owner } = await getNamedAccounts()
   const timestampContract = await deployments.get('Timestamp')
   const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
-  const tokenContract = await deployments.get('Token')
+  const tokenContract = await deployments.get('ERC20Mock')
   const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
   const safeERC20 = SafeERC20.attach(tokenContract.address)
 
@@ -38,4 +38,4 @@ const func = async (hre) => {
 }
 export default func
 func.tags = ['HUHGovernance']
-module.exports.dependencies = ['Timestamp', 'Token']
+module.exports.dependencies = ['Timestamp', 'ERC20Mock']

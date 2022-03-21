@@ -5,7 +5,6 @@ import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
@@ -38,7 +37,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         }
         __Ownable_init();
         __UUPSUpgradeable_init();
-        console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
+        // console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);

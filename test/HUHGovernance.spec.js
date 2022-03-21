@@ -1,6 +1,5 @@
 import { expect } from './utils/chai-setup'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
-import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 import { upgrade } from '../src/upgrade'
 
@@ -29,7 +28,7 @@ const calculateYearsDeltaTime = (years) => {
 const mockedDeployFixture = deployments.createFixture(async () => {
   // await deployments.fixture(); // ensure you start from a fresh deployments
   const { deploy } = deployments
-  await deployments.fixture(['Token'])
+  await deployments.fixture(['ERC20Mock'])
   const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
   const FREEZE_AMOUNT = INITIAL_BALANCE / 10
@@ -47,13 +46,9 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
   await timestamp.mock.caculateYearsDeltatime.withArgs(50).returns(calculateYearsDeltaTime(50))
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
-  const acceptedToken = await waffle.deployContract(namedSigners.deployer, ERC20Mock, [
-    'ERC20Mock name',
-    'ERC20Mock symbol',
-    namedSigners.deployer.address,
-    constants.INITIAL_BALANCE
-  ])
-  await acceptedToken.transfer(namedSigners.tokenOwner.address, constants.FREEZE_AMOUNT)
+  const acceptedToken = await ethers.getContract('ERC20Mock')
+  await acceptedToken.increaseAllowance(namedSigners.deployer.address, constants.FREEZE_AMOUNT)
+  await acceptedToken.connect(namedSigners.deployer).transfer(namedSigners.tokenOwner.address, constants.FREEZE_AMOUNT)
   await deploy('HUHGovernance', {
     contract: 'HUHGovernance',
     from: namedSigners.deployer.address,
