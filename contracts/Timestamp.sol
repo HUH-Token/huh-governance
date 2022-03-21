@@ -9,8 +9,11 @@ contract Timestamp {
         return block.timestamp;
     }
 
+    // Every year has on average 365.2425 days accordingly to:
+    // https://en.wikipedia.org/wiki/Year.
+    // Here we use division truncation to correctly calculate the number of days within years delta time.
     function caculateYearsDeltatime(uint _years) external pure returns (uint256){
         uint oneDay = 1 days;
-        return ((_years * 3652425 + 5000)/ 10000) * oneDay;
+        return (_years * 3652425 * oneDay + 5000)/ 10000;
     }
 }

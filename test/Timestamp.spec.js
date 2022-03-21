@@ -15,6 +15,6 @@ describe('Timestamp contract', () => {
   })
   it('Calculates correctly years deltatime', async () => {
     expect(await deploy.timestamp.caculateYearsDeltatime(50))
-      .to.be.bignumber.to.be.equal(1577836800)
+      .to.be.bignumber.to.be.equal(1577847600)
   })
 })
