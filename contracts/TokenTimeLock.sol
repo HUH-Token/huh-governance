@@ -15,6 +15,7 @@ import "./Timestamp.sol";
  */
 contract TokenTimeLock is Ownable {
     using SafeERC20 for IERC20;
+    event ReleasedTokens(address freezer, uint amount, uint lockTime);
 
     // ERC20 basic token contract being held
     IERC20 immutable private _token;
@@ -95,5 +96,6 @@ contract TokenTimeLock is Ownable {
         require(_amount > 0, "TokenTimeLock: no tokens to release");
 
         token().safeTransfer(beneficiary(), _amount);
+        emit ReleasedTokens(owner(), _amount, this.deltaTime());
     }
 }

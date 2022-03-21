@@ -11,13 +11,14 @@ const mockedDeployFixture = deployments.createFixture(async () => {
   const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
   const DEPLOY_TIMESTAMP = 1
-  const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
-  const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
+  const DELTA_TIME = 24 * 60 * 60
+  const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + DELTA_TIME // one day later
+  const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + DELTA_TIME // one day later
   const TIMESTAMPS = { DEPLOY: DEPLOY_TIMESTAMP, DEPOSIT: DEPOSIT_TIMESTAMP, UNLOCK: UNLOCK_TIMESTAMP }
   const TOKEN_NAME = 'A Token name'
   const TOKEN_SYMBOL = 'A Token symbol'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
-  const constants = { LOCK_TIME, INITIAL_BALANCE, TIMESTAMPS, TOKEN }
+  const constants = { LOCK_TIME, INITIAL_BALANCE, TIMESTAMPS, TOKEN, DELTA_TIME }
   const namedSigners = await getNamedSigners()
   // let timestamp = await waffle.deployContract(first, Timestamp)
   const timestamp = await waffle.deployMockContract(namedSigners.deployer, Timestamp.abi)
@@ -34,7 +35,7 @@ const mockedDeployFixture = deployments.createFixture(async () => {
     timestamp.address,
     acceptedToken.address,
     namedSigners.deployer.address,
-    constants.TIMESTAMPS.DEPLOY + 24 * 60 * 60,
+    constants.DELTA_TIME,
     0
   ])
   return {
@@ -55,5 +56,19 @@ describe('TokenTimeLock contract', () => {
     await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
     await expect(deploy.tokenTimeLock.connect(deploy.deployer).release())
       .to.be.revertedWith('TokenTimeLock: no tokens to release')
+  })
+  describe('With a deposit', async () => {
+    let depositAmount
+    beforeEach(async () => {
+      depositAmount = deploy.constants.INITIAL_BALANCE
+      await deploy.acceptedToken.increaseAllowance(deploy.deployer.address, depositAmount)
+      await deploy.acceptedToken.transferFrom(deploy.deployer.address, deploy.tokenTimeLock.address, depositAmount)
+    })
+    it('Should emit ReleasedTokens event', async () => {
+      await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
+      await expect(deploy.tokenTimeLock.connect(deploy.deployer).release())
+        .to.emit(deploy.tokenTimeLock, 'ReleasedTokens')
+        .withArgs(deploy.deployer.address, depositAmount, deploy.constants.DELTA_TIME - deploy.constants.TIMESTAMPS.DEPLOY)
+    })
   })
 })
