@@ -22,7 +22,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     TokenTimeLock[] private allTokenTimeLocks;
     
     Timestamp private timestamp;
-    uint private maximumLockTime;
+    uint private immutable maximumLockTime;
 
     function _authorizeUpgrade(address) internal override proxied {}
 

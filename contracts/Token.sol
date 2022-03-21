@@ -16,7 +16,7 @@ contract Token {
     uint256 public totalSupply = 1000000;
 
     // An address type variable is used to store ethereum accounts.
-    address public owner;
+    address public immutable owner;
 
     // A mapping is a key/value map. Here we store each account balance.
     mapping(address => uint256) balances;
