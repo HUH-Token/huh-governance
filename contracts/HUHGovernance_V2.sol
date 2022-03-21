@@ -34,31 +34,31 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
     }
 
-    function calculateVotingQuality(address voter) public view onlyOwner returns(uint) {
+    function calculateVotingQuality(address voter) external view onlyOwner returns(uint) {
         return _calculateVotingQuality(voter);
     }
 
-    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) public view onlyOwner returns (TokenTimeLock) {
+    function getTokenTimeLock(address timeLockHolder, uint tokenTimelockIndex) external view onlyOwner returns (TokenTimeLock) {
         return _getTokenTimeLock(timeLockHolder, tokenTimelockIndex);
     }
 
-    function getTokenTimeLocks(address timeLockHolder) public view onlyOwner returns (TokenTimeLock[] memory) {
+    function getTokenTimeLocks(address timeLockHolder) external view onlyOwner returns (TokenTimeLock[] memory) {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public proxied {
+    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) external proxied {
         console.log("\nUpgrading Contract");
     }
 
-    function getListOfTokenTimeLocks() public view onlyOwner returns (TokenTimeLock[] memory){
+    function getListOfTokenTimeLocks() external view onlyOwner returns (TokenTimeLock[] memory){
         return allTokenTimeLocks;
     }
 
-    function freezeHuhTokens(address beneficiary, uint amount, uint lockTime) public {
+    function freezeHuhTokens(address beneficiary, uint amount, uint lockTime) external {
         _freezeHuhTokens(_msgSender(), beneficiary, amount, lockTime);
     }
 
-    function freezeMyHuhTokens(uint amount, uint lockTime) public {
+    function freezeMyHuhTokens(uint amount, uint lockTime) external {
         _freezeHuhTokens(_msgSender(), _msgSender(), amount, lockTime);
     }
     
@@ -75,7 +75,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     }
 
 
-    function unfreezeHuhTokens(uint tokenTimelockIndex) public{
+    function unfreezeHuhTokens(uint tokenTimelockIndex) external {
         address unfreezer = _msgSender();
         require(tokenTimelockIndex < tokenTimeLocks[unfreezer].length, "Index out of bounds!");
         TokenTimeLock tokenTimelock = _takeTokenTimeLock(unfreezer, tokenTimelockIndex);
@@ -84,15 +84,15 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         emit UnfrozenHuhTokens(_msgSender(), amount, tokenTimelock.deltaTime());
     }
 
-    function calculateMyVotingQuality() public view returns(uint) {
+    function calculateMyVotingQuality() external view returns(uint) {
         return _calculateVotingQuality(_msgSender());
     }
 
-    function getMyTokenTimeLock(uint tokenTimelockIndex) public view returns (TokenTimeLock) {
+    function getMyTokenTimeLock(uint tokenTimelockIndex) external view returns (TokenTimeLock) {
         return _getTokenTimeLock(_msgSender(), tokenTimelockIndex);
     }
 
-    function getMyTokenTimeLocks() public view returns (TokenTimeLock[] memory) {
+    function getMyTokenTimeLocks() external view returns (TokenTimeLock[] memory) {
         return _getTokenTimeLocks(_msgSender());
     }
 

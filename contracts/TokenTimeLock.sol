@@ -47,7 +47,7 @@ contract TokenTimeLock is Ownable {
     /**
      * @return the position of the TokenTimeLock.
      */
-    function position() public view virtual returns (uint256) {
+    function position() external view virtual returns (uint256) {
         return _position;
     }
 
@@ -68,7 +68,7 @@ contract TokenTimeLock is Ownable {
     /**
      * @return the time when the tokens are released.
      */
-    function deltaTime() public view virtual returns (uint256) {
+    function deltaTime() external view virtual returns (uint256) {
         return _deltaTime;
     }
 
@@ -86,7 +86,7 @@ contract TokenTimeLock is Ownable {
     /**
      * @notice Transfers tokens held by timelock to beneficiary.
      */
-    function release() public virtual onlyOwner {
+    function release() external virtual onlyOwner {
         // solhint-disable-next-line not-rely-on-time, reason-string
         require(timestamp.getTimestamp() >= releaseTime(), "TokenTimeLock: current time is before release time");
 
