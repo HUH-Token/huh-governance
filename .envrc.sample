@@ -1,0 +1,7 @@
+export ENABLE_GAS_REPORT=1
+export MNEMONIC="Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi Omicron Pi Rho Sigma Tau Upsilon Phi Chi Psi Omega"
+export COVERALLS_REPO_TOKEN="0123456789aAbBcCdDeEfFgGhHiIjJkKl"
+export DEFENDER_TEAM_API_KEY="123456789aAbBcCdDeEfFgGhHiIjJkKl"
+export DEFENDER_TEAM_API_SECRET_KEY="0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ01"
+export INFURA_KEY="23456789aAbBcCdDeEfFgGhHiIjJkKlL"
+export ETH_NODE_URI_RINKEBY="https://rinkeby.infura.io/v3/$INFURA_KEY"

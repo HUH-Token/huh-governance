@@ -5,10 +5,10 @@ import "./HUHGovernance.sol";
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
+// solhint-disable-next-line contract-name-camelcase
 contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
@@ -24,6 +24,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     Timestamp private timestamp;
     uint private immutable maximumLockTime;
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override proxied {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor

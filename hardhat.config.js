@@ -5,11 +5,16 @@ import '@nomiclabs/hardhat-solhint'
 import '@openzeppelin/hardhat-upgrades'
 import 'solidity-coverage'
 import 'hardhat-gas-reporter'
+import '@openzeppelin/hardhat-defender'
 
 import { nodeUrl, accounts } from './utils/network'
 const enableGasReport = !!process.env.ENABLE_GAS_REPORT
 const enableProduction = process.env.COMPILE_MODE === 'production'
 const config = {
+  defender: {
+    apiKey: process.env.DEFENDER_TEAM_API_KEY,
+    apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY
+  },
   solidity: {
     compilers: [
       {
@@ -52,9 +57,9 @@ const config = {
     }
   },
   namedAccounts: {
-    deployer: 2,
-    tokenOwner: 1,
-    proxy01Owner: 0
+    deployer: 6,
+    tokenOwner: 7,
+    proxy01Owner: 5
   },
   paths: {
     sources: 'contracts'

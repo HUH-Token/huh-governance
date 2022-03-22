@@ -23,6 +23,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     Timestamp private timestamp;
     uint private maximumLockTime;
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override proxied {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -30,8 +31,8 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
     }
 
-    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) proxied initializer public {
-        // solhint-disable-next-line security/no-inline-assembly
+    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
         }
