@@ -9,6 +9,9 @@ const getImplementation = async (contract) => {
     contract.address,
     IMPLEMENTATION_STORAGE
   )
-  return `0x${stored.match(regexp)}`
+  // The following is still needed for hardhat network.
+  if (stored.length > 42) { return `0x${stored.match(regexp)}` }
+
+  return stored
 }
 export { getImplementation }

@@ -1,16 +1,14 @@
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from './signers'
 import { getImplementation } from './getImplementation'
-import { defender } from 'hardhat'
+// import { defender } from 'hardhat'
 
 const upgrade = async (deployArtifacts, accountDeploy) => {
+  const { deploy } = deployments
+  const { proxy01Owner, deployer } = await getNamedSigners()
   const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2')
+  const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
+  console.log(`Previous implementation: ${previousImplementation}`)
   if (accountDeploy) {
-    const { deploy } = deployments
-    const { proxy01Owner, deployer } = await getNamedSigners()
-
-    const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-    // console.log(`Previous implementation: ${previousImplementation}`)
-
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',
       from: proxy01Owner.address,
@@ -35,16 +33,16 @@ const upgrade = async (deployArtifacts, accountDeploy) => {
     })
 
     const newImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-    // console.log(`New implementation: ${newImplementation}`)
+    console.log(`New implementation: ${newImplementation}`)
     const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
     await huhGovernanceV1.connect(deployer).transferOwnership(newImplementation)
     const hUHGovernanceV2 = HUHGovernanceV2Contract.attach(newImplementation)
     await hUHGovernanceV2.connect(deployer).onUpgrade(previousImplementation)
   } else {
     // multisig deploy
-    console.log('Preparing proposal...')
-    const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract)
-    console.log('Upgrade proposal created at:', proposal.url)
+    // console.log('Preparing proposal...')
+    // const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract)
+    // console.log('Upgrade proposal created at:', proposal.url)
   }
 }
 
