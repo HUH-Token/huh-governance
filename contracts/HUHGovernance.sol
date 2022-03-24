@@ -12,9 +12,9 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
 
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     
-    IERC20 public timeLockedToken;
+    IERC20Upgradeable public timeLockedToken;
     mapping(address => TokenTimeLock[]) private tokenTimeLocks;
     
     // records for upgradeability pourpose.
@@ -27,11 +27,11 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     function _authorizeUpgrade(address) internal override proxied {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
+    constructor(IERC20Upgradeable _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
         init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
     }
 
-    function init(address proxyAdmin, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
+    function init(address proxyAdmin, IERC20Upgradeable _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
         _transferProxyOwnership(proxyAdmin);
         __Ownable_init();
         __UUPSUpgradeable_init();

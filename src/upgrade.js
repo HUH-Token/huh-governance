@@ -11,20 +11,21 @@ const upgrade = async (deployArtifacts) => {
   const previousImplementation = await getImplementationAddress(hre.network.provider, deployArtifacts.hUHGovernance.address)
   // console.log(`Previous implementation: ${previousImplementation}`)
   const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
+  const constructorArgs = [
+    deployArtifacts.acceptedToken.address,
+    deployArtifacts.timestamp.address,
+    50 // Maximum lock time in years
+  ]
   if (multisig) {
     // multisig deploy
     console.log('Preparing proposal...')
-    const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe })
+    const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })
     console.log('Upgrade proposal created at:', proposal.url)
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',
       from: proxy01Owner.address,
-      args: [
-        deployArtifacts.acceptedToken.address,
-        deployArtifacts.timestamp.address,
-        50 // Maximum lock time in years
-      ],
+      args: constructorArgs,
       proxy: {
         proxyContract: 'ERC1967Proxy',
         proxyArgs: ['{implementation}', '{data}']

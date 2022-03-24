@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./Timestamp.sol";
 
 /**
@@ -14,11 +14,11 @@ import "./Timestamp.sol";
  * after 1 year".
  */
 contract TokenTimeLock is Ownable {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     event ReleasedTokens(address freezer, uint amount, uint lockTime);
 
     // ERC20 basic token contract being held
-    IERC20 immutable private _token;
+    IERC20Upgradeable immutable private _token;
 
     // beneficiary of tokens after they are released
     address immutable private _beneficiary;
@@ -33,7 +33,7 @@ contract TokenTimeLock is Ownable {
 
     Timestamp private timestamp;
 
-    constructor (Timestamp _timestamp, IERC20 token_, address beneficiary_, uint256 releaseTime_, uint256 position_) {
+    constructor (Timestamp _timestamp, IERC20Upgradeable token_, address beneficiary_, uint256 releaseTime_, uint256 position_) {
         timestamp = _timestamp;
         uint256 rightNow = timestamp.getTimestamp();
         // solhint-disable-next-line not-rely-on-time, reason-string
@@ -55,7 +55,7 @@ contract TokenTimeLock is Ownable {
     /**
      * @return the token being held.
      */
-    function token() public view virtual returns (IERC20) {
+    function token() public view virtual returns (IERC20Upgradeable) {
         return _token;
     }
 
