@@ -31,17 +31,25 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
     }
 
-    function init(address owner, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, owner)
-        }
+    function init(address proxyAdmin, IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
+        _transferProxyOwnership(proxyAdmin);
         __Ownable_init();
         __UUPSUpgradeable_init();
         // console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
+    }
+
+    function _transferProxyOwnership(address newProxyAdmin) internal {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, newProxyAdmin)
+        }
+    }
+
+    function transferProxyOwnership(address newProxyAdmin) external proxied {
+        _transferProxyOwnership(newProxyAdmin);
     }
 
     function calculateVotingQuality(address voter) external view onlyOwner returns(uint) {

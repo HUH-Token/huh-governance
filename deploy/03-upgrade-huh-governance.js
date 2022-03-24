@@ -9,7 +9,7 @@ const func = async (hre) => {
   const hUHGovernance = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
 
   const deployArtifacts = { acceptedToken, timestamp, hUHGovernance }
-  await upgrade(deployArtifacts, false)
+  await upgrade(deployArtifacts)
 }
 export default func
 func.tags = ['HUHGovernance_V2']

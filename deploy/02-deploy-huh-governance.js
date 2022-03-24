@@ -1,8 +1,10 @@
 import { ethers } from 'hardhat'
+import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
+import { gnosisSafe, multisig } from '../src/multisig'
 
 const func = async (hre) => {
   const { deploy } = deployments
-  const { deployer, proxy01Owner } = await getNamedAccounts()
+  const { proxy01Owner, deployer } = await getNamedSigners()
   const timestampContract = await deployments.get('Timestamp')
   const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
   const tokenContract = await deployments.get('ERC20Mock')
@@ -12,7 +14,7 @@ const func = async (hre) => {
   await deploy('HUHGovernance',
     {
       contract: 'HUHGovernance',
-      from: deployer,
+      from: deployer.address,
       args: [
         safeERC20.address,
         timestamp.address,
@@ -25,7 +27,7 @@ const func = async (hre) => {
           init: {
             methodName: 'init',
             args: [
-              proxy01Owner,
+              proxy01Owner.address,
               safeERC20.address,
               timestamp.address,
               50 // Maximum lock time in years
@@ -35,6 +37,13 @@ const func = async (hre) => {
       },
       log: true
     })
+  const hUHGovernance = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
+  if (multisig) {
+    console.log('Transferring ownership of ProxyAdmin...')
+    // The owner of the ProxyAdmin can upgrade our contracts
+    await hUHGovernance.connect(proxy01Owner).transferProxyOwnership(gnosisSafe)
+    console.log('Transferred ownership of ProxyAdmin to:', gnosisSafe)
+  }
 }
 export default func
 func.tags = ['HUHGovernance']

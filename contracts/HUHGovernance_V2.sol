@@ -29,7 +29,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(IERC20 _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
-        console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
+        // console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
@@ -47,8 +47,9 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) external proxied {
-        console.log("\nUpgrading Contract");
+        // console.log("\nUpgrading Contract");
     }
 
     function getListOfTokenTimeLocks() external view onlyOwner returns (TokenTimeLock[] memory){

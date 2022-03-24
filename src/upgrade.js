@@ -1,14 +1,22 @@
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from './signers'
-import { getImplementation } from './getImplementation'
-// import { defender } from 'hardhat'
+import { gnosisSafe, multisig } from './multisig'
+import {
+  getImplementationAddress
+} from '@openzeppelin/upgrades-core'
 
-const upgrade = async (deployArtifacts, accountDeploy) => {
+const upgrade = async (deployArtifacts) => {
   const { deploy } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
   const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2')
-  const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-  console.log(`Previous implementation: ${previousImplementation}`)
-  if (accountDeploy) {
+  const previousImplementation = await getImplementationAddress(hre.network.provider, deployArtifacts.hUHGovernance.address)
+  // console.log(`Previous implementation: ${previousImplementation}`)
+  const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
+  if (multisig) {
+    // multisig deploy
+    console.log('Preparing proposal...')
+    const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe })
+    console.log('Upgrade proposal created at:', proposal.url)
+  } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',
       from: proxy01Owner.address,
@@ -32,17 +40,11 @@ const upgrade = async (deployArtifacts, accountDeploy) => {
       log: true
     })
 
-    const newImplementation = await getImplementation(deployArtifacts.hUHGovernance)
-    console.log(`New implementation: ${newImplementation}`)
-    const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
+    const newImplementation = await getImplementationAddress(hre.network.provider, deployArtifacts.hUHGovernance.address)
+    // console.log(`New implementation: ${newImplementation}`)
     await huhGovernanceV1.connect(deployer).transferOwnership(newImplementation)
     const hUHGovernanceV2 = HUHGovernanceV2Contract.attach(newImplementation)
     await hUHGovernanceV2.connect(deployer).onUpgrade(previousImplementation)
-  } else {
-    // multisig deploy
-    // console.log('Preparing proposal...')
-    // const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract)
-    // console.log('Upgrade proposal created at:', proposal.url)
   }
 }
 

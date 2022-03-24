@@ -15,6 +15,8 @@ module.exports = {
   rules: {
   },
   globals: {
+    defender: true,
+    hre: true,
     ethers: true,
     deployments: true,
     getNamedAccounts: true,
