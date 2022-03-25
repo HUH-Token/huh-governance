@@ -1,12 +1,10 @@
 import { upgrade } from './../src/upgrade'
+import { getContract } from '../src/getContract'
 
 const func = async (hre) => {
-  const timestampContract = await deployments.get('Timestamp')
-  const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
-  const tokenContract = await deployments.get('ERC20Mock')
-  const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
-  const acceptedToken = SafeERC20.attach(tokenContract.address)
-  const hUHGovernance = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
+  const timestamp = await getContract('Timestamp')
+  const acceptedToken = await getContract('ERC20Mock')
+  const hUHGovernance = await getContract('HUHGovernance')
 
   const deployArtifacts = { acceptedToken, timestamp, hUHGovernance }
   await upgrade(deployArtifacts)

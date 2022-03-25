@@ -1,15 +1,12 @@
-import { ethers } from 'hardhat'
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 import { gnosisSafe, multisig } from '../src/multisig'
+import { getContract } from '../src/getContract'
 
 const func = async (hre) => {
   const { deploy } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
-  const timestampContract = await deployments.get('Timestamp')
-  const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
-  const tokenContract = await deployments.get('ERC20Mock')
-  const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
-  const safeERC20 = SafeERC20.attach(tokenContract.address)
+  const timestamp = await getContract('Timestamp')
+  const safeERC20 = await getContract('ERC20Mock')
 
   await deploy('HUHGovernance',
     {
@@ -27,7 +24,7 @@ const func = async (hre) => {
           init: {
             methodName: 'init',
             args: [
-              proxy01Owner.address,
+              (multisig)? gnosisSafe : proxy01Owner.address,
               safeERC20.address,
               timestamp.address,
               50 // Maximum lock time in years
@@ -37,13 +34,13 @@ const func = async (hre) => {
       },
       log: true
     })
-  const hUHGovernance = await ethers.getContractAt('HUHGovernance', (await deployments.get('HUHGovernance')).address)
-  if (multisig) {
-    console.log('Transferring ownership of ProxyAdmin...')
-    // The owner of the ProxyAdmin can upgrade our contracts
-    await hUHGovernance.connect(proxy01Owner).transferProxyOwnership(gnosisSafe)
-    console.log('Transferred ownership of ProxyAdmin to:', gnosisSafe)
-  }
+  // if (multisig) {
+  //   const hUHGovernance = await getContract('HUHGovernance')
+  //   console.log('Transferring ownership of ProxyAdmin...')
+  //   // The owner of the ProxyAdmin can upgrade our contracts
+  //   await hUHGovernance.connect(proxy01Owner).transferProxyOwnership(gnosisSafe)
+  //   console.log('Transferred ownership of ProxyAdmin to:', gnosisSafe)
+  // }
 }
 export default func
 func.tags = ['HUHGovernance']
