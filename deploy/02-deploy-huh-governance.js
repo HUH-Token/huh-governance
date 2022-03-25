@@ -24,7 +24,7 @@ const func = async (hre) => {
           init: {
             methodName: 'init',
             args: [
-              (multisig)? gnosisSafe : proxy01Owner.address,
+              (multisig) ? gnosisSafe : proxy01Owner.address,
               safeERC20.address,
               timestamp.address,
               50 // Maximum lock time in years
