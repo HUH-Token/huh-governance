@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
+// solhint-disable-next-line contract-name-camelcase
 contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
