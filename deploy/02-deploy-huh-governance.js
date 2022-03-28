@@ -1,22 +1,23 @@
 import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '../src/signers'
 import { gnosisSafe, multisig } from '../src/multisig'
 import { getContract } from '../src/getContract'
+import { getContractArgs } from '../src/getContractArgs'
 
 const func = async (hre) => {
   const { deploy } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
   const timestamp = await getContract('Timestamp')
-  const safeERC20 = await getContract('ERC20Mock')
+  const acceptedToken = await getContract('ERC20Mock')
+
+  const deployArtifacts = { acceptedToken, timestamp }
+
+  const args = getContractArgs(deployArtifacts)
 
   await deploy('HUHGovernance',
     {
       contract: 'HUHGovernance',
       from: deployer.address,
-      args: [
-        safeERC20.address,
-        timestamp.address,
-        50 // Maximum lock time in years
-      ],
+      args,
       proxy: {
         proxyContract: 'ERC1967Proxy',
         proxyArgs: ['{implementation}', '{data}'],
@@ -25,9 +26,7 @@ const func = async (hre) => {
             methodName: 'init',
             args: [
               (multisig) ? gnosisSafe : proxy01Owner.address,
-              safeERC20.address,
-              timestamp.address,
-              50 // Maximum lock time in years
+              ...args
             ]
           }
         }

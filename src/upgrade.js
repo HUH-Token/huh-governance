@@ -2,16 +2,13 @@ import { /* setupUsers, connectAndGetNamedAccounts, */ getNamedSigners } from '.
 import { gnosisSafe, multisig } from './multisig'
 import { getImplementation } from './getImplementation'
 import { upgrades } from 'hardhat'
+import { getContractArgs } from './getContractArgs'
 
 const upgrade = async (deployArtifacts) => {
   const { deploy } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
   const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2')
-  const constructorArgs = [
-    deployArtifacts.acceptedToken.address,
-    deployArtifacts.timestamp.address,
-    50 // Maximum lock time in years
-  ]
+  const constructorArgs = getContractArgs(deployArtifacts)
   const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
   // console.log(`Previous implementation: ${previousImplementation}`)
   const huhGovernanceV1 = await ethers.getContractAt('HUHGovernance', previousImplementation)
