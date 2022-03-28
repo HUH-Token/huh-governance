@@ -83,585 +83,645 @@ const mockedDeployFixture = deployments.createFixture(async () => {
     hUHGovernance
   }
 })
-
-describe('HUHGovernance contract', () => {
-  let deploy
-  beforeEach(async () => {
-    deploy = await mockedDeployFixture()
-  })
-  describe('Before upgrade', async () => {
-    describe('Freeze', async () => {
-      let depositValue
+const makeSuite = (votingQualityMultiplier, callback, additionalTests) => {
+  describe('Freeze', () => {
+    let depositValue
+    beforeEach(async () => {
+      depositValue = this.constants.FREEZE_AMOUNT
+      await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+    })
+    additionalTests()
+    describe('General tests', async () =>{
       beforeEach(async () => {
-        depositValue = deploy.constants.FREEZE_AMOUNT
-        await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
+        await callback()
       })
       it('Calculate right zero voting quality', async () => {
-        const initialVotingQuality = await deploy.hUHGovernance.calculateMyVotingQuality()
+        const initialVotingQuality = await this.hUHGovernance.calculateMyVotingQuality()
         expect(initialVotingQuality).to.be.equal(0)
       })
       it('TokenTimeLock: release time is before current time', async () => {
         const forHowLong = 0
-        await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPLOY - 1)
-        await expect(deploy.hUHGovernance.freezeMyHuhTokens(depositValue, forHowLong))
+        await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPLOY - 1)
+        await expect(this.hUHGovernance.freezeMyHuhTokens(depositValue, forHowLong))
           .to.be.revertedWith('TokenTimeLock: release time is before current time')
       })
       it('Emit FrozenHuhTokens when freezing for a third party', async () => {
-        await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeHuhTokens(deploy.tokenOwner.address, depositValue, forHowLong))
-          .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
-          .withArgs(deploy.tokenOwner.address, depositValue, forHowLong)
+        await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue)
+        const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+        await expect(this.hUHGovernance.connect(this.deployer).freezeHuhTokens(this.tokenOwner.address, depositValue, forHowLong))
+          .to.emit(this.hUHGovernance, 'FrozenHuhTokens')
+          .withArgs(this.tokenOwner.address, depositValue, forHowLong)
       })
       it('Emit FrozenHuhTokens', async () => {
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong))
-          .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
-          .withArgs(deploy.deployer.address, depositValue, forHowLong)
+        const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+        await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong))
+          .to.emit(this.hUHGovernance, 'FrozenHuhTokens')
+          .withArgs(this.deployer.address, depositValue, forHowLong)
       })
       it('Revert when trying to freeze a null value.', async () => {
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
+        const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+        await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong))
           .to.be.revertedWith('Too low amount!')
       })
       it('Revert when trying to freeze for longer than 50 years.', async () => {
-        await deploy.timestamp.mock.caculateYearsDeltatime.withArgs(51).returns(calculateYearsDeltaTime(51))
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(51)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
+        await this.timestamp.mock.caculateYearsDeltatime.withArgs(51).returns(calculateYearsDeltaTime(51))
+        const forHowLong = await this.timestamp.caculateYearsDeltatime(51)
+        await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong))
           .to.be.revertedWith('Too long lockTime!')
       })
-      // it.only('Revert when trying to release a null deposit', async () => {
-      //   const forHowLong = 24 * 60 * 60
-      //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-      //   await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong)
-      //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
-      //   await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-      //     .to.be.revertedWith('TokenTimeLock: no tokens to release')
-      // })
-      describe('After Staking', async () => {
-        let forHowLong
-        beforeEach(async () => {
-          forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
-        })
-        it('Owner should be able to get list of token time locks', async () => {
-          const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
-          expect(list.length).to.be.equal(1)
-          const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
-          expect(await tokenTimeLock.beneficiary())
-            .to.be.equal(deploy.deployer.address)
-        })
-        it('Non owner should not be able to get list of token time locks', async () => {
-          await expect(deploy.hUHGovernance.connect(deploy.proxy01Owner).getListOfTokenTimeLocks())
-            .to.be.revertedWith('Ownable: caller is not the owner')
-        })
-        describe('Owners\'s tests', async () => {
-          beforeEach(async () => {
-            await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-            await deploy.hUHGovernance.connect(deploy.tokenOwner).freezeMyHuhTokens(depositValue, forHowLong)
-          })
-          describe('Calculate others\' voting quality', async () => {
-            it('Owner should be entitled', async () => {
-              await deploy.hUHGovernance.connect(deploy.deployer).calculateVotingQuality(deploy.tokenOwner.address)
-            })
-            it('Non owners should not be entitled', async () => {
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).calculateVotingQuality(deploy.deployer.address))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
-          })
-          describe('Get others\' token time lock', async () => {
-            it('Owner should be entitled', async () => {
-              await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLock(deploy.tokenOwner.address, 0)
-            })
-            it('Non owners should not be entitled', async () => {
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLock(deploy.deployer.address, 0))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
-          })
-          describe('Get others\' token time locks', async () => {
-            it('Owner should be entitled', async () => {
-              const timeLocks = await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLocks(deploy.tokenOwner.address)
-              expect(timeLocks.length).to.be.greaterThan(0)
-            })
-            it('Non owners should not be entitled', async () => {
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLocks(deploy.deployer.address))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
-          })
-        })
-        describe('Check token time lock', async () => {
-          let tokenTimeLock
-          beforeEach(async () => {
-            const myTimeLocks = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            const TokenTimeLock = await ethers.getContractFactory('../artifacts/contracts/TokenTimeLock.sol:TokenTimeLock')
-            tokenTimeLock = TokenTimeLock.attach(myTimeLocks[0])
-          })
-          it('delta time', async () => {
-            expect(await tokenTimeLock.deltaTime()).to.be.equal(forHowLong)
-          })
-          it('amount', async () => {
-            expect(await tokenTimeLock.amount()).to.be.equal(deploy.constants.FREEZE_AMOUNT)
-          })
-        })
-        it('Calculate my voting quality', async () => {
-          expect(await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality())
-            .to.be.equal(157789080000)
-        })
-      })
     })
-    describe('Unfreeze tokens', async () => {
-      describe('without deposit', async () => {
-        it('try release', async () => {
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('Index out of bounds!')
-        })
-        it('try get TokenTimeLock', async () => {
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLock(0))
-            .to.be.revertedWith('Index out of bounds!')
-        })
-      })
-      describe('with one deposit', async () => {
-        let forHowLong
-        beforeEach(async () => {
-          forHowLong = 24 * 60 * 60
-          const depositValue = deploy.constants.FREEZE_AMOUNT
-          await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
-        })
-        it('before unlock', async () => {
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('TokenTimeLock: current time is before release time')
-        })
-        describe('after unlock', async () => {
-          beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
-          })
-          it('Correctly get my token time locks', async () => {
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            }))
-          })
-          it('revert when trying to directly release', async () => {
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              await expect(tokenTimeLock.release())
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            }))
-          })
-          it('Emit UnfrozenHuhTokens', async () => {
-            await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-              .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-              .withArgs(deploy.deployer.address, deploy.constants.FREEZE_AMOUNT, forHowLong)
-          })
-          it('should be able to get tokenTimeLock from existing index', async () => {
-            const tokenTimeLockAddress = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLock(0)
-            const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-            await expect(tokenTimeLock.release())
-              .to.be.revertedWith('Ownable: caller is not the owner')
-          })
-          describe('After unfreezing', async () => {
-            let initialVotingQuality
-            beforeEach(async () => {
-              initialVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              await deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0)
-            })
-            it('Reduce voting quality', async () => {
-              const finalVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              expect(finalVotingQuality).to.be.below(initialVotingQuality)
-            })
-            it('Owner should be able to get reduced list of token time locks', async () => {
-              const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
-              expect(list.length).to.be.equal(0)
-            })
-          })
-        })
-      })
-      describe('with two deposits', async () => {
-        let forHowLong
-        let firstDeposit
-        let secondDeposit
-        beforeEach(async () => {
-          forHowLong = 24 * 60 * 60
-          const totalDeposit = deploy.constants.FREEZE_AMOUNT
-          firstDeposit = Math.round(totalDeposit / 3)
-          secondDeposit = totalDeposit - firstDeposit
-          await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, totalDeposit)
-          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(firstDeposit, forHowLong)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(secondDeposit, forHowLong)
-        })
-        it('before unlock', async () => {
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('TokenTimeLock: current time is before release time')
-        })
-        describe('after unlock', async () => {
-          beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
-          })
-          it('Correctly get my token time locks', async () => {
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            }))
-          })
-          describe('Should be able to release from each token time lock independently', async () => {
-            it('Emit UnfrozenHuhTokens at index 0', async () => {
-              await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-                .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-                .withArgs(deploy.deployer.address, firstDeposit, forHowLong)
-            })
-            it('Emit YieldFarmingTokenRelease at index 1', async () => {
-              await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(1))
-                .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-                .withArgs(deploy.deployer.address, secondDeposit, forHowLong)
-            })
-          })
-          describe('After unfreezing', async () => {
-            let initialVotingQuality
-            beforeEach(async () => {
-              initialVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              await deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0)
-            })
-            it('Reduce voting quality', async () => {
-              const finalVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              expect(finalVotingQuality).to.be.below(initialVotingQuality)
-            })
-            it('Owner should be able to get reduced list of token time locks', async () => {
-              const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
-              expect(list.length).to.be.equal(1)
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            })
-          })
-        })
-      })
-    })
-    it('Should be able to upgrade the smart contract', async () => {
-      await upgrade(deploy)
-    })
-  })
-  describe('After upgrade', async () => {
-    let votingQualityMultiplier
-    beforeEach(async () => {
-      votingQualityMultiplier = 2
-    })
-    describe('Basic test', async () => {
-      let depositValue
-      let depositValue2
+
+    // it.only('Revert when trying to release a null deposit', async () => {
+    //   const forHowLong = 24 * 60 * 60
+    //   await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+    //   await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong)
+    //   await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
+    //   await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+    //     .to.be.revertedWith('TokenTimeLock: no tokens to release')
+    // })
+    describe('After Staking', async () => {
       let forHowLong
       beforeEach(async () => {
-        depositValue = deploy.constants.FREEZE_AMOUNT
-        depositValue2 = deploy.constants.FREEZE_AMOUNT / 4
-        forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-        await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
-        await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue2)
-        await deploy.hUHGovernance.connect(deploy.tokenOwner).freezeMyHuhTokens(depositValue2, forHowLong)
-        await upgrade(deploy)
+        forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+        await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
       })
-      it('Calculate my voting quality', async () => {
-        expect(await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality())
-          .to.be.equal(315578160000)
-        expect(await deploy.hUHGovernance.connect(deploy.tokenOwner).calculateMyVotingQuality())
-          .to.be.equal(78894540000)
-      })
-    })
-    describe('Freeze', async () => {
-      let depositValue
-      beforeEach(async () => {
-        depositValue = deploy.constants.FREEZE_AMOUNT
-        await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-      })
-      it('Calculate right zero voting quality', async () => {
-        await upgrade(deploy)
-        const initialVotingQuality = await deploy.hUHGovernance.calculateMyVotingQuality()
-        expect(initialVotingQuality).to.be.equal(0)
-      })
-      it('TokenTimeLock: release time is before current time', async () => {
-        await upgrade(deploy)
-        const forHowLong = 0
-        await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPLOY - 1)
-        await expect(deploy.hUHGovernance.freezeMyHuhTokens(depositValue, forHowLong))
-          .to.be.revertedWith('TokenTimeLock: release time is before current time')
-      })
-      it('Emit FrozenHuhTokens when freezing for a third party', async () => {
-        await upgrade(deploy)
-        await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeHuhTokens(deploy.tokenOwner.address, depositValue, forHowLong))
-          .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
-          .withArgs(deploy.tokenOwner.address, depositValue, forHowLong)
-      })
-      it('Emit FrozenHuhTokens', async () => {
-        await upgrade(deploy)
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong))
-          .to.emit(deploy.hUHGovernance, 'FrozenHuhTokens')
-          .withArgs(deploy.deployer.address, depositValue, forHowLong)
-      })
-      it('Revert when trying to freeze a null value.', async () => {
-        await upgrade(deploy)
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
-          .to.be.revertedWith('Too low amount!')
-      })
-      it('Revert when trying to freeze for longer than 50 years.', async () => {
-        await upgrade(deploy)
-        await deploy.timestamp.mock.caculateYearsDeltatime.withArgs(51).returns(calculateYearsDeltaTime(51))
-        const forHowLong = await deploy.timestamp.caculateYearsDeltatime(51)
-        await expect(deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong))
-          .to.be.revertedWith('Too long lockTime!')
-      })
-      // it.only('Revert when trying to release a null deposit', async () => {
-      //   const forHowLong = 24 * 60 * 60
-      //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-      //   await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(0, forHowLong)
-      //   await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
-      //   await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-      //     .to.be.revertedWith('TokenTimeLock: no tokens to release')
-      // })
-      describe('After Staking', async () => {
-        let forHowLong
+      describe('Then upgrade', async () => {
         beforeEach(async () => {
-          forHowLong = await deploy.timestamp.caculateYearsDeltatime(50)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+          await callback()
         })
         it('Owner should be able to get list of token time locks', async () => {
-          await upgrade(deploy)
-          const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
+          const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
           expect(list.length).to.be.equal(1)
           const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
           expect(await tokenTimeLock.beneficiary())
-            .to.be.equal(deploy.deployer.address)
+            .to.be.equal(this.deployer.address)
         })
         it('Non owner should not be able to get list of token time locks', async () => {
-          await upgrade(deploy)
-          await expect(deploy.hUHGovernance.connect(deploy.proxy01Owner).getListOfTokenTimeLocks())
+          await expect(this.hUHGovernance.connect(this.proxy01Owner).getListOfTokenTimeLocks())
             .to.be.revertedWith('Ownable: caller is not the owner')
         })
-        describe('Owners\'s tests', async () => {
-          beforeEach(async () => {
-            await deploy.acceptedToken.connect(deploy.tokenOwner).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-            await deploy.hUHGovernance.connect(deploy.tokenOwner).freezeMyHuhTokens(depositValue, forHowLong)
+      })
+      describe('Owners\'s tests', async () => {
+        beforeEach(async () => {
+          await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue)
+          await this.hUHGovernance.connect(this.tokenOwner).freezeMyHuhTokens(depositValue, forHowLong)
+          await callback()
+        })
+        describe('Calculate others\' voting quality', async () => {
+          it('Owner should be entitled', async () => {
+            await this.hUHGovernance.connect(this.deployer).calculateVotingQuality(this.tokenOwner.address)
           })
-          describe('Calculate others\' voting quality', async () => {
-            it('Owner should be entitled', async () => {
-              await upgrade(deploy)
-              await deploy.hUHGovernance.connect(deploy.deployer).calculateVotingQuality(deploy.tokenOwner.address)
-            })
-            it('Non owners should not be entitled', async () => {
-              await upgrade(deploy)
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).calculateVotingQuality(deploy.deployer.address))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
-          })
-          describe('Get others\' token time lock', async () => {
-            it('Owner should be entitled', async () => {
-              await upgrade(deploy)
-              await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLock(deploy.tokenOwner.address, 0)
-            })
-            it('Non owners should not be entitled', async () => {
-              await upgrade(deploy)
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLock(deploy.deployer.address, 0))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
-          })
-          describe('Get others\' token time locks', async () => {
-            it('Owner should be entitled', async () => {
-              await upgrade(deploy)
-              const timeLocks = await deploy.hUHGovernance.connect(deploy.deployer).getTokenTimeLocks(deploy.tokenOwner.address)
-              expect(timeLocks.length).to.be.greaterThan(0)
-            })
-            it('Non owners should not be entitled', async () => {
-              await upgrade(deploy)
-              await expect(deploy.hUHGovernance.connect(deploy.tokenOwner).getTokenTimeLocks(deploy.deployer.address))
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            })
+          it('Non owners should not be entitled', async () => {
+            await expect(this.hUHGovernance.connect(this.tokenOwner).calculateVotingQuality(this.deployer.address))
+              .to.be.revertedWith('Ownable: caller is not the owner')
           })
         })
-        describe('Check token time lock', async () => {
-          let tokenTimeLock
-          beforeEach(async () => {
-            const myTimeLocks = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            const TokenTimeLock = await ethers.getContractFactory('../artifacts/contracts/TokenTimeLock.sol:TokenTimeLock')
-            tokenTimeLock = TokenTimeLock.attach(myTimeLocks[0])
+        describe('Get others\' token time lock', async () => {
+          it('Owner should be entitled', async () => {
+            await this.hUHGovernance.connect(this.deployer).getTokenTimeLock(this.tokenOwner.address, 0)
           })
-          it('delta time', async () => {
-            await upgrade(deploy)
-            expect(await tokenTimeLock.deltaTime()).to.be.equal(forHowLong)
-          })
-          it('amount', async () => {
-            await upgrade(deploy)
-            expect(await tokenTimeLock.amount()).to.be.equal(deploy.constants.FREEZE_AMOUNT)
+          it('Non owners should not be entitled', async () => {
+            await expect(this.hUHGovernance.connect(this.tokenOwner).getTokenTimeLock(this.deployer.address, 0))
+              .to.be.revertedWith('Ownable: caller is not the owner')
           })
         })
-        it('Calculate my voting quality', async () => {
-          await upgrade(deploy)
-          expect(await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality())
-            .to.be.equal(votingQualityMultiplier * 157789080000)
+        describe('Get others\' token time locks', async () => {
+          it('Owner should be entitled', async () => {
+            const timeLocks = await this.hUHGovernance.connect(this.deployer).getTokenTimeLocks(this.tokenOwner.address)
+            expect(timeLocks.length).to.be.greaterThan(0)
+          })
+          it('Non owners should not be entitled', async () => {
+            await expect(this.hUHGovernance.connect(this.tokenOwner).getTokenTimeLocks(this.deployer.address))
+              .to.be.revertedWith('Ownable: caller is not the owner')
+          })
         })
+      })
+      describe('Check token time lock', async () => {
+        let tokenTimeLock
+        beforeEach(async () => {
+          const myTimeLocks = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+          const TokenTimeLock = await ethers.getContractFactory('../artifacts/contracts/TokenTimeLock.sol:TokenTimeLock')
+          tokenTimeLock = TokenTimeLock.attach(myTimeLocks[0])
+          await callback()
+        })
+        it('delta time', async () => {
+          expect(await tokenTimeLock.deltaTime()).to.be.equal(forHowLong)
+        })
+        it('amount', async () => {
+          expect(await tokenTimeLock.amount()).to.be.equal(this.constants.FREEZE_AMOUNT)
+        })
+      })
+      it('Calculate my voting quality', async () => {
+        await callback()
+        expect(await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality())
+          .to.be.equal(votingQualityMultiplier * 157789080000)
       })
     })
-    describe('Unfreeze tokens', async () => {
-      describe('without deposit', async () => {
-        it('try release', async () => {
-          await upgrade(deploy)
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('Index out of bounds!')
-        })
-        it('try get TokenTimeLock', async () => {
-          await upgrade(deploy)
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLock(0))
-            .to.be.revertedWith('Index out of bounds!')
-        })
+  })
+  describe('Unfreeze tokens', async () => {
+    describe('without deposit', async () => {
+      it('try release', async () => {
+        await callback()
+        await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+          .to.be.revertedWith('Index out of bounds!')
       })
-      describe('with one deposit', async () => {
-        let forHowLong
+      it('try get TokenTimeLock', async () => {
+        await callback()
+        await expect(this.hUHGovernance.connect(this.deployer).getMyTokenTimeLock(0))
+          .to.be.revertedWith('Index out of bounds!')
+      })
+    })
+    describe('with one deposit', async () => {
+      let forHowLong
+      beforeEach(async () => {
+        forHowLong = 24 * 60 * 60
+        const depositValue = this.constants.FREEZE_AMOUNT
+        await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+        await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+        await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+      })
+      it('before unlock', async () => {
+        await callback()
+        await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+          .to.be.revertedWith('TokenTimeLock: current time is before release time')
+      })
+      describe('after unlock', async () => {
         beforeEach(async () => {
-          forHowLong = 24 * 60 * 60
-          const depositValue = deploy.constants.FREEZE_AMOUNT
-          await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, depositValue)
-          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+          await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
         })
-        it('before unlock', async () => {
-          await upgrade(deploy)
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('TokenTimeLock: current time is before release time')
+        it('Correctly get my token time locks', async () => {
+          await callback()
+          const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+          await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
+            const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+            expect(await tokenTimeLock.beneficiary())
+              .to.be.equal(this.deployer.address)
+          }))
         })
-        describe('after unlock', async () => {
-          beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
-          })
-          it('Correctly get my token time locks', async () => {
-            await upgrade(deploy)
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            }))
-          })
-          it('revert when trying to directly release', async () => {
-            await upgrade(deploy)
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              await expect(tokenTimeLock.release())
-                .to.be.revertedWith('Ownable: caller is not the owner')
-            }))
-          })
-          it('Emit UnfrozenHuhTokens', async () => {
-            await upgrade(deploy)
-            await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-              .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-              .withArgs(deploy.deployer.address, deploy.constants.FREEZE_AMOUNT, forHowLong)
-          })
-          it('should be able to get tokenTimeLock from existing index', async () => {
-            await upgrade(deploy)
-            const tokenTimeLockAddress = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLock(0)
+        it('revert when trying to directly release', async () => {
+          await callback()
+          const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+          await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
             const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
             await expect(tokenTimeLock.release())
               .to.be.revertedWith('Ownable: caller is not the owner')
-          })
-          describe('After unfreezing', async () => {
-            let initialVotingQuality
-            beforeEach(async () => {
-              initialVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              await deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0)
-            })
-            it('Reduce voting quality', async () => {
-              await upgrade(deploy)
-              const finalVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              expect(finalVotingQuality).to.be.below(initialVotingQuality)
-            })
-            it('Owner should be able to get reduced list of token time locks', async () => {
-              await upgrade(deploy)
-              const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
-              expect(list.length).to.be.equal(0)
-            })
-          })
+          }))
         })
-      })
-      describe('with two deposits', async () => {
-        let forHowLong
-        let firstDeposit
-        let secondDeposit
-        beforeEach(async () => {
-          forHowLong = 24 * 60 * 60
-          const totalDeposit = deploy.constants.FREEZE_AMOUNT
-          firstDeposit = Math.round(totalDeposit / 3)
-          secondDeposit = totalDeposit - firstDeposit
-          await deploy.acceptedToken.connect(deploy.deployer).increaseAllowance(deploy.hUHGovernance.address, totalDeposit)
-          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(firstDeposit, forHowLong)
-          await deploy.hUHGovernance.connect(deploy.deployer).freezeMyHuhTokens(secondDeposit, forHowLong)
+        it('Emit UnfrozenHuhTokens', async () => {
+          await callback()
+          await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+            .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+            .withArgs(this.deployer.address, this.constants.FREEZE_AMOUNT, forHowLong)
         })
-        it('before unlock', async () => {
-          await upgrade(deploy)
-          await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-            .to.be.revertedWith('TokenTimeLock: current time is before release time')
+        it('should be able to get tokenTimeLock from existing index', async () => {
+          await callback()
+          const tokenTimeLockAddress = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLock(0)
+          const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+          await expect(tokenTimeLock.release())
+            .to.be.revertedWith('Ownable: caller is not the owner')
         })
-        describe('after unlock', async () => {
+        describe('After unfreezing', async () => {
+          let initialVotingQuality
           beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
+            initialVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+            await this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0)
           })
-          it('Correctly get my token time locks', async () => {
-            await upgrade(deploy)
-            const tokenTimeLockAddresses = await deploy.hUHGovernance.connect(deploy.deployer).getMyTokenTimeLocks()
-            await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            }))
+          it('Reduce voting quality', async () => {
+            await callback()
+            const finalVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+            expect(finalVotingQuality/votingQualityMultiplier).to.be.below(initialVotingQuality)
           })
-          describe('Should be able to release from each token time lock independently', async () => {
-            it('Emit UnfrozenHuhTokens at index 0', async () => {
-              await upgrade(deploy)
-              await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0))
-                .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-                .withArgs(deploy.deployer.address, firstDeposit, forHowLong)
-            })
-            it('Emit YieldFarmingTokenRelease at index 1', async () => {
-              await upgrade(deploy)
-              await expect(deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(1))
-                .to.emit(deploy.hUHGovernance, 'UnfrozenHuhTokens')
-                .withArgs(deploy.deployer.address, secondDeposit, forHowLong)
-            })
-          })
-          describe('After unfreezing', async () => {
-            let initialVotingQuality
-            beforeEach(async () => {
-              initialVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              await deploy.hUHGovernance.connect(deploy.deployer).unfreezeHuhTokens(0)
-            })
-            it('Reduce voting quality', async () => {
-              await upgrade(deploy)
-              const finalVotingQuality = await deploy.hUHGovernance.connect(deploy.deployer).calculateMyVotingQuality()
-              expect(finalVotingQuality / votingQualityMultiplier).to.be.below(initialVotingQuality)
-            })
-            it('Owner should be able to get reduced list of token time locks', async () => {
-              await upgrade(deploy)
-              const list = await deploy.hUHGovernance.connect(deploy.deployer).getListOfTokenTimeLocks()
-              expect(list.length).to.be.equal(1)
-              const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
-              expect(await tokenTimeLock.beneficiary())
-                .to.be.equal(deploy.deployer.address)
-            })
+          it('Owner should be able to get reduced list of token time locks', async () => {
+            await callback()
+            const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
+            expect(list.length).to.be.equal(0)
           })
         })
       })
     })
-    it('Should be able to upgrade the smart contract', async () => {
-      await upgrade(deploy)
+    describe('with two deposits', async () => {
+      let forHowLong
+      let firstDeposit
+      let secondDeposit
+      beforeEach(async () => {
+        forHowLong = 24 * 60 * 60
+        const totalDeposit = this.constants.FREEZE_AMOUNT
+        firstDeposit = Math.round(totalDeposit / 3)
+        secondDeposit = totalDeposit - firstDeposit
+        await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, totalDeposit)
+        await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+        await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(firstDeposit, forHowLong)
+        await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(secondDeposit, forHowLong)
+      })
+      it('before unlock', async () => {
+        await callback()
+        await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+          .to.be.revertedWith('TokenTimeLock: current time is before release time')
+      })
+      describe('after unlock', async () => {
+        beforeEach(async () => {
+          await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
+        })
+        it('Correctly get my token time locks', async () => {
+          await callback()
+          const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+          await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
+            const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+            expect(await tokenTimeLock.beneficiary())
+              .to.be.equal(this.deployer.address)
+          }))
+        })
+        describe('Should be able to release from each token time lock independently', async () => {
+          it('Emit UnfrozenHuhTokens at index 0', async () => {
+            await callback()
+            await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+              .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+              .withArgs(this.deployer.address, firstDeposit, forHowLong)
+          })
+          it('Emit YieldFarmingTokenRelease at index 1', async () => {
+            await callback()
+            await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(1))
+              .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+              .withArgs(this.deployer.address, secondDeposit, forHowLong)
+          })
+        })
+        describe('After unfreezing', async () => {
+          let initialVotingQuality
+          beforeEach(async () => {
+            initialVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+            await this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0)
+          })
+          it('Reduce voting quality', async () => {
+            await callback()
+            const finalVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+            expect(finalVotingQuality / votingQualityMultiplier).to.be.below(initialVotingQuality)
+          })
+          it('Owner should be able to get reduced list of token time locks', async () => {
+            await callback()
+            const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
+            expect(list.length).to.be.equal(1)
+            const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
+            expect(await tokenTimeLock.beneficiary())
+              .to.be.equal(this.deployer.address)
+          })
+        })
+      })
     })
   })
+  it('Should be able to upgrade the smart contract', async () => {
+    await callback()
+    await upgrade(this)
+  })
+}
+describe('HUHGovernance contract', () => {
+  beforeEach(async () => {
+    const deploy = await mockedDeployFixture()
+    Object.assign(this, deploy)
+  })
+  describe('Before upgrade', () => {
+    makeSuite(1, async () => {}, () => {})
+  })
+  describe('After upgrade', () => {
+    makeSuite(2, async () => {
+      await upgrade(this)
+    }, () => {
+      describe('Basic test', () => {
+        let depositValue
+        let depositValue2
+        let forHowLong
+        beforeEach(async () => {
+          depositValue = this.constants.FREEZE_AMOUNT
+          depositValue2 = this.constants.FREEZE_AMOUNT / 4
+          forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+          await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+          await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+          await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue2)
+          await this.hUHGovernance.connect(this.tokenOwner).freezeMyHuhTokens(depositValue2, forHowLong)
+          await upgrade(this)
+        })
+        it('Calculate my voting quality', async () => {
+          expect(await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality())
+            .to.be.equal(315578160000)
+          expect(await this.hUHGovernance.connect(this.tokenOwner).calculateMyVotingQuality())
+            .to.be.equal(78894540000)
+        })
+      })
+    })
+  })
+  // describe('After upgrade', () => {
+  //   let votingQualityMultiplier
+  //   beforeEach(async () => {
+  //     votingQualityMultiplier = 2
+  //   })
+  //   describe('Basic test', () => {
+  //     let depositValue
+  //     let depositValue2
+  //     let forHowLong
+  //     beforeEach(async () => {
+  //       depositValue = this.constants.FREEZE_AMOUNT
+  //       depositValue2 = this.constants.FREEZE_AMOUNT / 4
+  //       forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+  //       await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+  //       await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+  //       await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue2)
+  //       await this.hUHGovernance.connect(this.tokenOwner).freezeMyHuhTokens(depositValue2, forHowLong)
+  //       await upgrade(this)
+  //     })
+  //     it('Calculate my voting quality', async () => {
+  //       expect(await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality())
+  //         .to.be.equal(315578160000)
+  //       expect(await this.hUHGovernance.connect(this.tokenOwner).calculateMyVotingQuality())
+  //         .to.be.equal(78894540000)
+  //     })
+  //   })
+  //   describe('Freeze', () => {
+  //     let depositValue
+  //     beforeEach(async () => {
+  //       depositValue = this.constants.FREEZE_AMOUNT
+  //       await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+  //     })
+  //     it('Calculate right zero voting quality', async () => {
+  //       await upgrade(this)
+  //       const initialVotingQuality = await this.hUHGovernance.calculateMyVotingQuality()
+  //       expect(initialVotingQuality).to.be.equal(0)
+  //     })
+  //     it('TokenTimeLock: release time is before current time', async () => {
+  //       await upgrade(this)
+  //       const forHowLong = 0
+  //       await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPLOY - 1)
+  //       await expect(this.hUHGovernance.freezeMyHuhTokens(depositValue, forHowLong))
+  //         .to.be.revertedWith('TokenTimeLock: release time is before current time')
+  //     })
+  //     it('Emit FrozenHuhTokens when freezing for a third party', async () => {
+  //       await upgrade(this)
+  //       await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue)
+  //       const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+  //       await expect(this.hUHGovernance.connect(this.deployer).freezeHuhTokens(this.tokenOwner.address, depositValue, forHowLong))
+  //         .to.emit(this.hUHGovernance, 'FrozenHuhTokens')
+  //         .withArgs(this.tokenOwner.address, depositValue, forHowLong)
+  //     })
+  //     it('Emit FrozenHuhTokens', async () => {
+  //       await upgrade(this)
+  //       const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+  //       await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong))
+  //         .to.emit(this.hUHGovernance, 'FrozenHuhTokens')
+  //         .withArgs(this.deployer.address, depositValue, forHowLong)
+  //     })
+  //     it('Revert when trying to freeze a null value.', async () => {
+  //       await upgrade(this)
+  //       const forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+  //       await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong))
+  //         .to.be.revertedWith('Too low amount!')
+  //     })
+  //     it('Revert when trying to freeze for longer than 50 years.', async () => {
+  //       await upgrade(this)
+  //       await this.timestamp.mock.caculateYearsDeltatime.withArgs(51).returns(calculateYearsDeltaTime(51))
+  //       const forHowLong = await this.timestamp.caculateYearsDeltatime(51)
+  //       await expect(this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong))
+  //         .to.be.revertedWith('Too long lockTime!')
+  //     })
+  //     // it.only('Revert when trying to release a null deposit', async () => {
+  //     //   const forHowLong = 24 * 60 * 60
+  //     //   await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+  //     //   await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(0, forHowLong)
+  //     //   await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
+  //     //   await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //     //     .to.be.revertedWith('TokenTimeLock: no tokens to release')
+  //     // })
+  //     describe('After Staking', async () => {
+  //       let forHowLong
+  //       beforeEach(async () => {
+  //         forHowLong = await this.timestamp.caculateYearsDeltatime(50)
+  //         await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+  //       })
+  //       it('Owner should be able to get list of token time locks', async () => {
+  //         await upgrade(this)
+  //         const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
+  //         expect(list.length).to.be.equal(1)
+  //         const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
+  //         expect(await tokenTimeLock.beneficiary())
+  //           .to.be.equal(this.deployer.address)
+  //       })
+  //       it('Non owner should not be able to get list of token time locks', async () => {
+  //         await upgrade(this)
+  //         await expect(this.hUHGovernance.connect(this.proxy01Owner).getListOfTokenTimeLocks())
+  //           .to.be.revertedWith('Ownable: caller is not the owner')
+  //       })
+  //       describe('Owners\'s tests', async () => {
+  //         beforeEach(async () => {
+  //           await this.acceptedToken.connect(this.tokenOwner).increaseAllowance(this.hUHGovernance.address, depositValue)
+  //           await this.hUHGovernance.connect(this.tokenOwner).freezeMyHuhTokens(depositValue, forHowLong)
+  //         })
+  //         describe('Calculate others\' voting quality', async () => {
+  //           it('Owner should be entitled', async () => {
+  //             await upgrade(this)
+  //             await this.hUHGovernance.connect(this.deployer).calculateVotingQuality(this.tokenOwner.address)
+  //           })
+  //           it('Non owners should not be entitled', async () => {
+  //             await upgrade(this)
+  //             await expect(this.hUHGovernance.connect(this.tokenOwner).calculateVotingQuality(this.deployer.address))
+  //               .to.be.revertedWith('Ownable: caller is not the owner')
+  //           })
+  //         })
+  //         describe('Get others\' token time lock', async () => {
+  //           it('Owner should be entitled', async () => {
+  //             await upgrade(this)
+  //             await this.hUHGovernance.connect(this.deployer).getTokenTimeLock(this.tokenOwner.address, 0)
+  //           })
+  //           it('Non owners should not be entitled', async () => {
+  //             await upgrade(this)
+  //             await expect(this.hUHGovernance.connect(this.tokenOwner).getTokenTimeLock(this.deployer.address, 0))
+  //               .to.be.revertedWith('Ownable: caller is not the owner')
+  //           })
+  //         })
+  //         describe('Get others\' token time locks', async () => {
+  //           it('Owner should be entitled', async () => {
+  //             await upgrade(this)
+  //             const timeLocks = await this.hUHGovernance.connect(this.deployer).getTokenTimeLocks(this.tokenOwner.address)
+  //             expect(timeLocks.length).to.be.greaterThan(0)
+  //           })
+  //           it('Non owners should not be entitled', async () => {
+  //             await upgrade(this)
+  //             await expect(this.hUHGovernance.connect(this.tokenOwner).getTokenTimeLocks(this.deployer.address))
+  //               .to.be.revertedWith('Ownable: caller is not the owner')
+  //           })
+  //         })
+  //       })
+  //       describe('Check token time lock', async () => {
+  //         let tokenTimeLock
+  //         beforeEach(async () => {
+  //           const myTimeLocks = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+  //           const TokenTimeLock = await ethers.getContractFactory('../artifacts/contracts/TokenTimeLock.sol:TokenTimeLock')
+  //           tokenTimeLock = TokenTimeLock.attach(myTimeLocks[0])
+  //         })
+  //         it('delta time', async () => {
+  //           await upgrade(this)
+  //           expect(await tokenTimeLock.deltaTime()).to.be.equal(forHowLong)
+  //         })
+  //         it('amount', async () => {
+  //           await upgrade(this)
+  //           expect(await tokenTimeLock.amount()).to.be.equal(this.constants.FREEZE_AMOUNT)
+  //         })
+  //       })
+  //       it('Calculate my voting quality', async () => {
+  //         await upgrade(this)
+  //         expect(await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality())
+  //           .to.be.equal(votingQualityMultiplier * 157789080000)
+  //       })
+  //     })
+  //   })
+  //   describe('Unfreeze tokens', () => {
+  //     describe('without deposit', async () => {
+  //       it('try release', async () => {
+  //         await upgrade(this)
+  //         await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //           .to.be.revertedWith('Index out of bounds!')
+  //       })
+  //       it('try get TokenTimeLock', async () => {
+  //         await upgrade(this)
+  //         await expect(this.hUHGovernance.connect(this.deployer).getMyTokenTimeLock(0))
+  //           .to.be.revertedWith('Index out of bounds!')
+  //       })
+  //     })
+  //     describe('with one deposit', async () => {
+  //       let forHowLong
+  //       beforeEach(async () => {
+  //         forHowLong = 24 * 60 * 60
+  //         const depositValue = this.constants.FREEZE_AMOUNT
+  //         await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
+  //         await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+  //         await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(depositValue, forHowLong)
+  //       })
+  //       it('before unlock', async () => {
+  //         await upgrade(this)
+  //         await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //           .to.be.revertedWith('TokenTimeLock: current time is before release time')
+  //       })
+  //       describe('after unlock', async () => {
+  //         beforeEach(async () => {
+  //           await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
+  //         })
+  //         it('Correctly get my token time locks', async () => {
+  //           await upgrade(this)
+  //           const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+  //           await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
+  //             const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+  //             expect(await tokenTimeLock.beneficiary())
+  //               .to.be.equal(this.deployer.address)
+  //           }))
+  //         })
+  //         it('revert when trying to directly release', async () => {
+  //           await upgrade(this)
+  //           const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+  //           await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
+  //             const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+  //             await expect(tokenTimeLock.release())
+  //               .to.be.revertedWith('Ownable: caller is not the owner')
+  //           }))
+  //         })
+  //         it('Emit UnfrozenHuhTokens', async () => {
+  //           await upgrade(this)
+  //           await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //             .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+  //             .withArgs(this.deployer.address, this.constants.FREEZE_AMOUNT, forHowLong)
+  //         })
+  //         it('should be able to get tokenTimeLock from existing index', async () => {
+  //           await upgrade(this)
+  //           const tokenTimeLockAddress = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLock(0)
+  //           const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+  //           await expect(tokenTimeLock.release())
+  //             .to.be.revertedWith('Ownable: caller is not the owner')
+  //         })
+  //         describe('After unfreezing', async () => {
+  //           let initialVotingQuality
+  //           beforeEach(async () => {
+  //             initialVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+  //             await this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0)
+  //           })
+  //           it('Reduce voting quality', async () => {
+  //             await upgrade(this)
+  //             const finalVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+  //             expect(finalVotingQuality).to.be.below(initialVotingQuality)
+  //           })
+  //           it('Owner should be able to get reduced list of token time locks', async () => {
+  //             await upgrade(this)
+  //             const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
+  //             expect(list.length).to.be.equal(0)
+  //           })
+  //         })
+  //       })
+  //     })
+  //     describe('with two deposits', async () => {
+  //       let forHowLong
+  //       let firstDeposit
+  //       let secondDeposit
+  //       beforeEach(async () => {
+  //         forHowLong = 24 * 60 * 60
+  //         const totalDeposit = this.constants.FREEZE_AMOUNT
+  //         firstDeposit = Math.round(totalDeposit / 3)
+  //         secondDeposit = totalDeposit - firstDeposit
+  //         await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, totalDeposit)
+  //         await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.DEPOSIT)
+  //         await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(firstDeposit, forHowLong)
+  //         await this.hUHGovernance.connect(this.deployer).freezeMyHuhTokens(secondDeposit, forHowLong)
+  //       })
+  //       it('before unlock', async () => {
+  //         await upgrade(this)
+  //         await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //           .to.be.revertedWith('TokenTimeLock: current time is before release time')
+  //       })
+  //       describe('after unlock', async () => {
+  //         beforeEach(async () => {
+  //           await this.timestamp.mock.getTimestamp.returns(this.constants.TIMESTAMPS.UNLOCK)
+  //         })
+  //         it('Correctly get my token time locks', async () => {
+  //           await upgrade(this)
+  //           const tokenTimeLockAddresses = await this.hUHGovernance.connect(this.deployer).getMyTokenTimeLocks()
+  //           await Promise.all(tokenTimeLockAddresses.map(async tokenTimeLockAddress => {
+  //             const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', tokenTimeLockAddress)
+  //             expect(await tokenTimeLock.beneficiary())
+  //               .to.be.equal(this.deployer.address)
+  //           }))
+  //         })
+  //         describe('Should be able to release from each token time lock independently', async () => {
+  //           it('Emit UnfrozenHuhTokens at index 0', async () => {
+  //             await upgrade(this)
+  //             await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0))
+  //               .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+  //               .withArgs(this.deployer.address, firstDeposit, forHowLong)
+  //           })
+  //           it('Emit YieldFarmingTokenRelease at index 1', async () => {
+  //             await upgrade(this)
+  //             await expect(this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(1))
+  //               .to.emit(this.hUHGovernance, 'UnfrozenHuhTokens')
+  //               .withArgs(this.deployer.address, secondDeposit, forHowLong)
+  //           })
+  //         })
+  //         describe('After unfreezing', async () => {
+  //           let initialVotingQuality
+  //           beforeEach(async () => {
+  //             initialVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+  //             await this.hUHGovernance.connect(this.deployer).unfreezeHuhTokens(0)
+  //           })
+  //           it('Reduce voting quality', async () => {
+  //             await upgrade(this)
+  //             const finalVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
+  //             expect(finalVotingQuality / votingQualityMultiplier).to.be.below(initialVotingQuality)
+  //           })
+  //           it('Owner should be able to get reduced list of token time locks', async () => {
+  //             await upgrade(this)
+  //             const list = await this.hUHGovernance.connect(this.deployer).getListOfTokenTimeLocks()
+  //             expect(list.length).to.be.equal(1)
+  //             const tokenTimeLock = await ethers.getContractAt('TokenTimeLock', list[0])
+  //             expect(await tokenTimeLock.beneficiary())
+  //               .to.be.equal(this.deployer.address)
+  //           })
+  //         })
+  //       })
+  //     })
+  //   })
+  //   it('Should be able to upgrade the smart contract', async () => {
+  //     await upgrade(this)
+  //   })
+  // })
 })

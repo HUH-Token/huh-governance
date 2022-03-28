@@ -25,11 +25,12 @@ const upgrade = async (deployArtifacts) => {
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',
-      from: proxy01Owner.address,
+      from: deployer.address,
       args: constructorArgs,
       proxy: {
+        owner: proxy01Owner.address,
         proxyContract: 'ERC1967Proxy',
-        proxyArgs: ['{implementation}', '{data}']
+        proxyArgs: ['{implementation}', '{data}'],
         // execute: {
         //   onUpgrade: {
         //     methodName: 'onUpgrade',
@@ -46,7 +47,7 @@ const upgrade = async (deployArtifacts) => {
     // console.log(`New implementation: ${newImplementation}`)
     await huhGovernanceV1.connect(deployer).transferOwnership(newImplementation)
     const hUHGovernanceV2 = HUHGovernanceV2Contract.attach(newImplementation)
-    await hUHGovernanceV2.connect(deployer).onUpgrade(previousImplementation)
+    await hUHGovernanceV2.connect(proxy01Owner).onUpgrade(previousImplementation)
   }
 }
 

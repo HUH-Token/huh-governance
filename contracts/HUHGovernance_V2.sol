@@ -1,14 +1,14 @@
 pragma solidity 0.8.9;
 // SPDX-License-Identifier: MIT
 
-import "./HUHGovernance.sol";
 import "hardhat/console.sol";
 import "./TokenTimeLock.sol";
+import "./HUHGovernance.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat-deploy/solc_0.8/proxy/Proxied.sol";
 
-// solhint-disable-next-line contract-name-camelcase
 contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     event FrozenHuhTokens(address freezer, uint amount, uint lockTime);
     event UnfrozenHuhTokens(address unfreezer, uint amount, uint lockTime);
@@ -22,19 +22,35 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
     TokenTimeLock[] private allTokenTimeLocks;
     
     Timestamp private timestamp;
-    
-    // can not be immutable to remain upgrade safe.
-    uint private /*immutable*/ maximumLockTime;
+    uint private maximumLockTime;
 
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override proxied {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(IERC20Upgradeable _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) {
+        init(address(0), _huhToken, _timestamp, maximumLockTimeInYears);
+    }
+
+    function init(address proxyAdmin, IERC20Upgradeable _huhToken, Timestamp _timestamp, uint maximumLockTimeInYears) public proxied initializer {
+        _transferProxyOwnership(proxyAdmin);
+        __Ownable_init();
+        __UUPSUpgradeable_init();
         // console.log("\nDeploying Contract Initializer with %d years", maximumLockTimeInYears);
         timeLockedToken = _huhToken;
         timestamp = _timestamp;
         maximumLockTime = timestamp.caculateYearsDeltatime(maximumLockTimeInYears);
+    }
+
+    function _transferProxyOwnership(address newProxyAdmin) internal {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, newProxyAdmin)
+        }
+    }
+
+    function transferProxyOwnership(address newProxyAdmin) external onlyProxyAdmin {
+        _transferProxyOwnership(newProxyAdmin);
     }
 
     function calculateVotingQuality(address voter) external view onlyOwner returns(uint) {
@@ -49,9 +65,10 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         return _getTokenTimeLocks(timeLockHolder);
     }
 
-    // solhint-disable-next-line no-empty-blocks
-    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) external proxied {
-        // console.log("\nUpgrading Contract");
+    // TODO uncomment on upgraded versions!
+    function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public proxied {
+        console.log("\nUpgrading Contract from account %s.", _msgSender());
+        _transferProxyOwnership(_msgSender());
     }
 
     function getListOfTokenTimeLocks() external view onlyOwner returns (TokenTimeLock[] memory){
@@ -77,7 +94,6 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         timeLockedToken.safeTransferFrom(freezer, address(tokenTimeLock), amount);
         emit FrozenHuhTokens(beneficiary, amount, lockTime);
     }
-
 
     function unfreezeHuhTokens(uint tokenTimelockIndex) external {
         address unfreezer = _msgSender();

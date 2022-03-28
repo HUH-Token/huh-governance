@@ -48,7 +48,7 @@ contract HUHGovernance is Proxied, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function transferProxyOwnership(address newProxyAdmin) external proxied {
+    function transferProxyOwnership(address newProxyAdmin) external onlyProxyAdmin {
         _transferProxyOwnership(newProxyAdmin);
     }
 
