@@ -30,7 +30,7 @@ const upgrade = async (deployArtifacts) => {
       proxy: {
         owner: proxy01Owner.address,
         proxyContract: 'ERC1967Proxy',
-        proxyArgs: ['{implementation}', '{data}'],
+        proxyArgs: ['{implementation}', '{data}']
         // execute: {
         //   onUpgrade: {
         //     methodName: 'onUpgrade',

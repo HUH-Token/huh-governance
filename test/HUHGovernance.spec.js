@@ -91,7 +91,7 @@ const makeSuite = (votingQualityMultiplier, callback, additionalTests) => {
       await this.acceptedToken.connect(this.deployer).increaseAllowance(this.hUHGovernance.address, depositValue)
     })
     additionalTests()
-    describe('General tests', async () =>{
+    describe('General tests', async () => {
       beforeEach(async () => {
         await callback()
       })
@@ -289,7 +289,7 @@ const makeSuite = (votingQualityMultiplier, callback, additionalTests) => {
           it('Reduce voting quality', async () => {
             await callback()
             const finalVotingQuality = await this.hUHGovernance.connect(this.deployer).calculateMyVotingQuality()
-            expect(finalVotingQuality/votingQualityMultiplier).to.be.below(initialVotingQuality)
+            expect(finalVotingQuality / votingQualityMultiplier).to.be.below(initialVotingQuality)
           })
           it('Owner should be able to get reduced list of token time locks', async () => {
             await callback()
