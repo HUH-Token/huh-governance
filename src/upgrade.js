@@ -16,7 +16,7 @@ const upgrade = async (deployArtifacts) => {
     // multisig deploy
     console.log('Registering proxy for upgrade...')
     const HUHGovernanceContract = await ethers.getContractFactory('HUHGovernance')
-    const proxy = await upgrades.forceImport(deployArtifacts.hUHGovernance.address, HUHGovernanceContract, { multisig: gnosisSafe, constructorArgs })
+    const proxy = await upgrades.forceImport(deployArtifacts.hUHGovernance.address, HUHGovernanceContract, { multisig: gnosisSafe })
     console.log('Proxy registered at:', proxy.address)
     console.log('Preparing proposal...')
     // const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })

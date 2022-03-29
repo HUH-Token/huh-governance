@@ -68,7 +68,7 @@ contract HUHGovernance_V2 is Proxied, UUPSUpgradeable, OwnableUpgradeable {
 
     // TODO uncomment on upgraded versions!
     function onUpgrade(HUHGovernance /*_previousHUHGovernance*/) public proxied {
-        console.log("\nUpgrading Contract from account %s.", _msgSender());
+        // console.log("\nUpgrading Contract from account %s.", _msgSender());
         _transferProxyOwnership(_msgSender());
     }
 
