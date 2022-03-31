@@ -3,9 +3,8 @@ import { gnosisSafe, multisig } from './multisig'
 import { getImplementation } from './getImplementation'
 import { upgrades } from 'hardhat'
 import { getContractArgs } from './getContractArgs'
-import { exec } from 'child_process'
-import util from 'util';
-const execute = util.promisify(exec);
+import { spawn } from 'child_process'
+import { onExit } from '@rauschma/stringio'
 
 const upgrade = async (deployArtifacts) => {
   const { deploy, save } = deployments
@@ -34,17 +33,10 @@ const upgrade = async (deployArtifacts) => {
 
     await save('HUHGovernance_V2', proxyDeployments)
 
-    await execute(`scripts/verify-address.sh ${hre.network.name} ${[proposal.metadata.newImplementationAddress, ...constructorArgs].join(' ')}`, (error, stdout, stderr) => {
-      if (error) {
-        console.log('Error verifying new proposal!')
-        return
-      }
-      if (stderr) {
-        console.log('Error with the file system')
-        return
-      }
-      console.log('Result of proposal verification attempt:', stdout)
-    })
+    const childProcess = spawn('scripts/verify-address.sh',
+      [hre.network.name, proposal.metadata.newImplementationAddress, ...constructorArgs],
+      { stdio: [process.stdin, process.stdout, process.stderr] })
+    await onExit(childProcess)
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',
