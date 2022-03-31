@@ -95,7 +95,39 @@ const makeSuite = (votingQualityMultiplier, callback, additionalTests) => {
       beforeEach(async () => {
         await callback()
       })
-      it('Calculate right zero voting quality', async () => {
+      it('Ownership transfer', async () => {
+        const firstOwner = await this.hUHGovernance.owner()
+        expect(firstOwner).to.equal(this.deployer.address)
+        await expect(this.hUHGovernance.connect(this.deployer).transferOwnership(this.tokenOwner.address))
+          .to.emit(this.hUHGovernance, 'OwnershipTransferred')
+          .withArgs(this.deployer.address, this.tokenOwner.address)
+        const secondOwner = await this.hUHGovernance.owner()
+        expect(secondOwner).to.equal(this.tokenOwner.address)
+      })
+      it('Get Proxy Admin', async () => {
+        const proxyAdmin = await this.hUHGovernance.getProxyAdmin()
+        expect(proxyAdmin).to.equal(this.proxy01Owner.address)
+      })
+      describe('Proxy Ownership transfer', async () => {
+        let firstProxyAdmin
+        beforeEach(async () => {
+          firstProxyAdmin = await this.hUHGovernance.getProxyAdmin()
+        })
+        it('Should succeed from ProxyAdmin', async () => {
+          expect(firstProxyAdmin).to.equal(this.proxy01Owner.address)
+          await expect(this.hUHGovernance.connect(this.proxy01Owner).transferProxyOwnership(this.deployer.address))
+            .to.emit(this.hUHGovernance, 'ProxyOwnershipTransferred')
+            .withArgs(this.proxy01Owner.address, this.deployer.address)
+          const secondProxyAdmin = await this.hUHGovernance.getProxyAdmin()
+          expect(secondProxyAdmin).to.equal(this.deployer.address)
+        })
+        it('Should revert if attempt to transfer from non ProxyAdmin account', async () => {
+          expect(firstProxyAdmin).to.equal(this.proxy01Owner.address)
+          await expect(this.hUHGovernance.connect(this.deployer).transferProxyOwnership(this.deployer.address))
+            .to.be.revertedWith('NOT_AUTHORIZED')
+        })
+      })
+      it('Calculate right zero votingy quality', async () => {
         const initialVotingQuality = await this.hUHGovernance.calculateMyVotingQuality()
         expect(initialVotingQuality).to.be.equal(0)
       })
