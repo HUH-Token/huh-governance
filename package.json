@@ -32,7 +32,7 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/hardhat-defender": "^1.6.0",
-    "@openzeppelin/hardhat-upgrades": "^1.15.0",
+    "@openzeppelin/hardhat-upgrades": "^1.17.0",
     "@openzeppelin/test-helpers": "^0.5.15",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",

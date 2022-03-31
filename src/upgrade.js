@@ -7,7 +7,7 @@ import { getContractArgs } from './getContractArgs'
 const upgrade = async (deployArtifacts) => {
   const { deploy } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
-  const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2')
+  const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2', deployer)
   const constructorArgs = getContractArgs(deployArtifacts)
   const previousImplementation = await getImplementation(deployArtifacts.hUHGovernance)
   // console.log(`Previous implementation: ${previousImplementation}`)
@@ -16,7 +16,7 @@ const upgrade = async (deployArtifacts) => {
     // multisig deploy
     console.log('Registering proxy for upgrade...')
     const HUHGovernanceContract = await ethers.getContractFactory('HUHGovernance')
-    const proxy = await upgrades.forceImport(deployArtifacts.hUHGovernance.address, HUHGovernanceContract, { multisig: gnosisSafe })
+    const proxy = await upgrades.forceImport(deployArtifacts.hUHGovernance.address, HUHGovernanceContract, { multisig: gnosisSafe, constructorArgs })
     console.log('Proxy registered at:', proxy.address)
     console.log('Preparing proposal...')
     // const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })
