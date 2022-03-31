@@ -5,7 +5,7 @@ import { upgrades } from 'hardhat'
 import { getContractArgs } from './getContractArgs'
 
 const upgrade = async (deployArtifacts) => {
-  const { deploy } = deployments
+  const { deploy, save } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
   const HUHGovernanceV2Contract = await ethers.getContractFactory('HUHGovernance_V2', deployer)
   const constructorArgs = getContractArgs(deployArtifacts)
@@ -22,6 +22,14 @@ const upgrade = async (deployArtifacts) => {
     // const proposal = await defender.proposeUpgrade(deployArtifacts.hUHGovernance.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })
     const proposal = await defender.proposeUpgrade(proxy.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })
     console.log('Upgrade proposal created at:', proposal.url)
+
+    const artifact = await deployments.getExtendedArtifact('HUHGovernance_V2');
+    let proxyDeployments = {
+        address: proposal.metadata.newImplementationAddress,
+        ...artifact
+    }
+
+    await save('HUHGovernance_V2', proxyDeployments);
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',

@@ -2,6 +2,7 @@ import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-solhint'
+import '@nomiclabs/hardhat-etherscan'
 import '@openzeppelin/hardhat-upgrades'
 import 'solidity-coverage'
 import 'hardhat-gas-reporter'
@@ -60,6 +61,9 @@ const config = {
     deployer: 6,
     tokenOwner: 7,
     proxy01Owner: 5
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   paths: {
     sources: 'contracts'

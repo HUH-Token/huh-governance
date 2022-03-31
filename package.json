@@ -11,6 +11,8 @@
     "test": "yarn hardhat test",
     "coverage": "yarn hardhat coverage",
     "deploy": "yarn hardhat deploy --network",
+    "verify": "yarn hardhat etherscan-verify --network",
+    "verify:address": "bash scripts/verify-address.sh",
     "redeploy": "func() { rm -rf deployments/\"$1\" && yarn hardhat deploy --network \"$1\"; }; func",
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",
     "ganache:start": "ganache-cli",
