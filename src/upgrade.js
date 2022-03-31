@@ -3,6 +3,9 @@ import { gnosisSafe, multisig } from './multisig'
 import { getImplementation } from './getImplementation'
 import { upgrades } from 'hardhat'
 import { getContractArgs } from './getContractArgs'
+import { exec } from 'child_process'
+import util from 'util';
+const execute = util.promisify(exec);
 
 const upgrade = async (deployArtifacts) => {
   const { deploy, save } = deployments
@@ -23,13 +26,25 @@ const upgrade = async (deployArtifacts) => {
     const proposal = await defender.proposeUpgrade(proxy.address, HUHGovernanceV2Contract, { multisig: gnosisSafe, constructorArgs })
     console.log('Upgrade proposal created at:', proposal.url)
 
-    const artifact = await deployments.getExtendedArtifact('HUHGovernance_V2');
-    let proxyDeployments = {
-        address: proposal.metadata.newImplementationAddress,
-        ...artifact
+    const artifact = await deployments.getExtendedArtifact('HUHGovernance_V2')
+    const proxyDeployments = {
+      address: proposal.metadata.newImplementationAddress,
+      ...artifact
     }
 
-    await save('HUHGovernance_V2', proxyDeployments);
+    await save('HUHGovernance_V2', proxyDeployments)
+
+    await execute(`scripts/verify-address.sh ${hre.network.name} ${[proposal.metadata.newImplementationAddress, ...constructorArgs].join(' ')}`, (error, stdout, stderr) => {
+      if (error) {
+        console.log('Error verifying new proposal!')
+        return
+      }
+      if (stderr) {
+        console.log('Error with the file system')
+        return
+      }
+      console.log('Result of proposal verification attempt:', stdout)
+    })
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',

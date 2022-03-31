@@ -13,6 +13,7 @@
     "deploy": "yarn hardhat deploy --network",
     "verify": "yarn hardhat etherscan-verify --network",
     "verify:address": "bash scripts/verify-address.sh",
+    "src": "node --require esm src/src.js",
     "redeploy": "func() { rm -rf deployments/\"$1\" && yarn hardhat deploy --network \"$1\"; }; func",
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",
     "ganache:start": "ganache-cli",
