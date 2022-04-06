@@ -3,8 +3,7 @@ import { gnosisSafe, multisig } from './multisig'
 import { getImplementation } from './getImplementation'
 import { upgrades } from 'hardhat'
 import { getContractArgs } from './getContractArgs'
-import { spawn } from 'child_process'
-import { onExit } from '@rauschma/stringio'
+import { verify } from './verify'
 
 const upgrade = async (deployArtifacts) => {
   const { deploy, save } = deployments
@@ -33,10 +32,8 @@ const upgrade = async (deployArtifacts) => {
 
     await save('HUHGovernance_V2', proxyDeployments)
 
-    const childProcess = spawn('scripts/verify-address.sh',
-      [hre.network.name, proposal.metadata.newImplementationAddress, ...constructorArgs],
-      { stdio: [process.stdin, process.stdout, process.stderr] })
-    await onExit(childProcess)
+    // TODO Either wait a minute or 5 block confirmations to start the verification process.
+    await verify(hre.network.name, proposal.metadata.newImplementationAddress, constructorArgs)
   } else {
     await deploy('HUHGovernance', {
       contract: 'HUHGovernance_V2',

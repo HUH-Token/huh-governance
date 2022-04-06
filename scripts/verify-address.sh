@@ -1,5 +1,7 @@
 #!/bin/bash
 func() {
-    yarn hardhat verify "$2" --network "$1" "${@:3}"; 
+    local network="$1";
+    local address="$2";
+    yarn hardhat verify "$address" --network "$network" "${@:3}"; 
 }
 func "$@"
