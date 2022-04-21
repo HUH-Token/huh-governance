@@ -5,6 +5,10 @@ import { upgrades } from 'hardhat'
 import { getContractArgs } from './getContractArgs'
 import { verify } from './verify'
 
+const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 const upgrade = async (deployArtifacts) => {
   const { deploy, save } = deployments
   const { proxy01Owner, deployer } = await getNamedSigners()
@@ -32,7 +36,10 @@ const upgrade = async (deployArtifacts) => {
 
     await save('HUHGovernance_V2', proxyDeployments)
 
-    // TODO Either wait a minute or 5 block confirmations to start the verification process.
+    // Either wait a minute or 5 block confirmations to start the verification process.
+    // In the meanwhile the improvement of https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/554 is not implemented, we will use a one minute workaround
+    console.log('Awaiting one minute to start verifying the proposal...')
+    await sleep(60000)
     await verify(hre.network.name, proposal.metadata.newImplementationAddress, constructorArgs)
   } else {
     await deploy('HUHGovernance', {
